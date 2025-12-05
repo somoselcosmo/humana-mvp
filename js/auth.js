@@ -1,33 +1,16 @@
-/* ARCHIVO: js/auth.js (CORREGIDO) */
+/* ARCHIVO: js/auth.js (CON PERSISTENCIA) */
 import { auth, db } from "./firebase.js";
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
+// Agregamos 'onAuthStateChanged' a los imports
+import { signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-auth.js";
 import { doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 
-// --- LOGIN ---
+// --- LOGIN MANUAL ---
 export async function loginUsuario(email, password) {
     try {
         const credenciales = await signInWithEmailAndPassword(auth, email, password);
-        const user = credenciales.user;
-        
-        // Consultar Rol en DB
-        const docRef = doc(db, "usuarios", user.uid);
-        const docSnap = await getDoc(docRef);
-
-        if (docSnap.exists()) {
-            const datos = docSnap.data();
-            return {
-                success: true,
-                nombre: datos.nombre,
-                email: datos.email,
-                rol: datos.rol,
-                jacId: datos.jacId || "providencia" // Fallback por si acaso
-            };
-        } else {
-            // AQUÍ ES DONDE TE SALÍA EL ERROR 2
-            alert("Error crítico: Usuario autenticado pero sin perfil en base de datos. Contacta soporte.");
-            return { success: false };
-        }
-
+        // Nota: No necesitamos devolver nada aquí porque el 'monitorSesion'
+        // detectará el cambio automáticamente.
+        return { success: true };
     } catch (error) {
         console.error("Error Login:", error);
         alert("Fallo al ingresar: " + error.message);
@@ -45,15 +28,10 @@ export async function logout() {
     }
 }
 
-// --- REGISTRO (AQUÍ ESTABA EL ERROR) ---
-// Fíjate que ahora añadimos 'jacId' en los argumentos de la función
+// --- REGISTRO ---
 export async function registrarUsuario(nombre, email, password, telefono, jacId) {
     try {
-        // 1. Crear usuario en Auth (Google)
         const credencial = await createUserWithEmailAndPassword(auth, email, password);
-        
-        // 2. Guardar en Firestore
-        // Si no llega jacId, ponemos 'providencia' por defecto para evitar errores
         const juntaAsignada = jacId || "providencia"; 
 
         await setDoc(doc(db, "usuarios", credencial.user.uid), {
@@ -61,19 +39,40 @@ export async function registrarUsuario(nombre, email, password, telefono, jacId)
             email: email,
             telefono: telefono,
             rol: "vecino",
-            jacId: juntaAsignada, // <--- Aquí es donde fallaba antes
+            jacId: juntaAsignada,
             fechaRegistro: new Date().toISOString()
         });
         
-        alert("¡Cuenta creada exitosamente! Bienvenido a tu comunidad.");
-        window.location.reload();
-
+        alert("¡Cuenta creada! Bienvenido.");
+        // No recargamos, dejamos que el monitor detecte el ingreso
     } catch (error) {
         console.error("Error Registro:", error);
-        
-        // Si falló el guardado en DB pero se creó en Auth, es un problema.
-        // En un sistema avanzado borraríamos el usuario de Auth, 
-        // pero para el MVP basta con mostrar el error.
         alert("Error: " + error.message);
     }
+}
+
+// --- NUEVO: MONITOR DE SESIÓN (El Guardia) ---
+// Esta función se ejecutará automáticamente cuando Firebase detecte un usuario
+export function monitorSesion(callback) {
+    onAuthStateChanged(auth, async (user) => {
+        if (user) {
+            // Si hay usuario (login previo o recarga de página)
+            console.log("Usuario detectado:", user.email);
+            
+            // Buscamos sus datos en la base de datos
+            const docRef = doc(db, "usuarios", user.uid);
+            const docSnap = await getDoc(docRef);
+
+            if (docSnap.exists()) {
+                // Enviamos los datos al app.js para que pinte el dashboard
+                callback(docSnap.data());
+            } else {
+                console.error("Usuario sin datos en DB");
+            }
+        } else {
+            // No hay usuario (nadie logueado)
+            console.log("No hay sesión activa.");
+            callback(null);
+        }
+    });
 }

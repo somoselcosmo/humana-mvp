@@ -155,12 +155,38 @@
                         <span>Directiva</span>
                     </a>
                     
-                    <!-- Item con submenú (Visual por ahora) -->
-                    <div class="menu-item">
-                        <span class="menu-icon"><i class="ri-book-shelf-line"></i></span>
-                        <span>Libros JAC</span>
-                        <i class="ri-arrow-down-s-line" style="margin-left: auto; font-size: 0.9rem;"></i>
-                    </div>
+                    <!-- MENÚ DESPLEGABLE DE LIBROS -->
+<div class="menu-item-group">
+    <!-- Botón Principal (Disparador) -->
+    <div class="menu-item" id="btn-toggle-libros" style="cursor: pointer; justify-content: space-between;">
+        <div style="display: flex; gap: 12px; align-items: center;">
+            <span class="menu-icon"><i class="ri-book-shelf-line"></i></span>
+            <span>Libros JAC</span>
+        </div>
+        <i class="ri-arrow-down-s-line" id="icon-arrow-libros" style="transition: transform 0.3s;"></i>
+    </div>
+
+    <!-- Submenú (Oculto por defecto) -->
+    <div id="submenu-libros" style="display: none; flex-direction: column; gap: 5px; padding-left: 20px; margin-top: 5px; border-left: 1px solid var(--border-color);">
+        
+        <a href="#" class="menu-item" data-target="libro-actas" style="font-size: 0.9em;">
+            <i class="ri-file-list-3-line"></i> Actas
+        </a>
+        <a href="#" class="menu-item" data-target="libro-afiliados" style="font-size: 0.9em;">
+            <i class="ri-group-line"></i> Afiliados
+        </a>
+        <a href="#" class="menu-item" data-target="libro-contable" style="font-size: 0.9em;">
+            <i class="ri-money-dollar-circle-line"></i> Contable
+        </a>
+        <a href="#" class="menu-item" data-target="libro-inventario" style="font-size: 0.9em;">
+            <i class="ri-archive-line"></i> Inventario
+        </a>
+        <a href="#" class="menu-item" data-target="libro-convivencia" style="font-size: 0.9em;">
+            <i class="ri-scales-line"></i> Convivencia
+        </a>
+
+    </div>
+</div>
 
                     <a href="#" class="menu-item" data-target="bandeja">
                         <span class="menu-icon"><i class="ri-mail-line"></i></span>
@@ -338,6 +364,35 @@
         </section>
     
     </div> <!-- FIN DE SECTION DIRECTIVA -->
+    <!-- VISTA C: VISOR DE LIBROS (Genérico) -->
+<div id="section-libros" class="hidden-view">
+    
+    <header class="council-header">
+        <div>
+            <!-- Título dinámico (cambiará según el libro) -->
+            <h1 id="libro-titulo">Libro JAC</h1>
+            <p class="council-header__subtitle" id="libro-subtitulo">Registro oficial de la comunidad</p>
+        </div>
+        <div>
+            <!-- Botón para agregar registros (Solo admins) -->
+            <button class="search-btn" style="width:auto; padding:0 20px; gap:10px;">
+                <i class="ri-add-line"></i> Nuevo Registro
+            </button>
+        </div>
+    </header>
+
+    <!-- TABLA GENÉRICA -->
+    <section class="council-section">
+        <div class="council-table">
+            <table id="tabla-libros">
+                <!-- El encabezado (thead) y cuerpo (tbody) se inyectan con JS -->
+                <thead id="libro-thead"></thead>
+                <tbody id="libro-tbody"></tbody>
+            </table>
+        </div>
+    </section>
+
+</div>
 
 
     <!-- FOOTER COMÚN -->

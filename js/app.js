@@ -1,48 +1,109 @@
-/* ARCHIVO: js/app.js (VERSIÓN COMPLETA Y DEFINITIVA) */
+/* =========================================================
+   ARCHIVO: js/app.js (VERSIÓN FINAL COMPLETA)
+   INCLUYE: Auth, Persistencia, Dashboard, Directiva y Libros
+   ========================================================= */
 
 // 1. IMPORTACIONES
-import { loginUsuario, registrarUsuario, logout } from "./auth.js";
+import { loginUsuario, registrarUsuario, logout, monitorSesion } from "./auth.js";
 import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { db } from "./firebase.js";
 
-console.log("App iniciada: Sistema de Vistas Activo 🚀");
+console.log("App iniciada: Sistema Humana Completo v5 🚀");
 
-// 2. REFERENCIAS GLOBALES
-let currentJacId = null; // Aquí guardaremos si es "providencia" o "san-vicente"
+// 2. VARIABLES GLOBALES
+let currentJacId = null; 
 
-// Elementos DOM Principales
+// 3. REFERENCIAS DEL DOM (HTML)
+// Vistas Principales
 const viewAuth = document.getElementById('view-auth');
 const viewDashboard = document.getElementById('view-dashboard');
 
-// Elementos del Dashboard (Vistas Internas)
+// Secciones Internas del Dashboard
 const sectionHome = document.getElementById('section-home');
 const sectionDirectiva = document.getElementById('section-directiva');
-const menuLinks = document.querySelectorAll('.menu-item'); // Los botones del sidebar
+const sectionLibros = document.getElementById('section-libros');
 
-// Formularios
+// Menú y Navegación
+const menuLinks = document.querySelectorAll('.menu-item');
+const btnToggleLibros = document.getElementById('btn-toggle-libros');
+const submenuLibros = document.getElementById('submenu-libros');
+const iconArrowLibros = document.getElementById('icon-arrow-libros');
+
+// Formularios y Botones
 const formLogin = document.getElementById('form-login');
 const formRegister = document.getElementById('form-register');
 const selectJac = document.getElementById('reg-jac');
+const boxLogin = document.getElementById('form-box-login');
+const boxRegister = document.getElementById('form-box-register');
+const btnIrRegistro = document.getElementById('btn-ir-registro');
+const btnVolverLogin = document.getElementById('btn-volver-login');
+const btnLogout = document.getElementById('btn-logout');
 
 
 // =========================================================
-// 3. SISTEMA DE NAVEGACIÓN (CAMBIAR ENTRE INICIO Y DIRECTIVA)
+// 4. MONITOR DE SESIÓN (PERSISTENCIA)
 // =========================================================
+// Esta función vigila si el usuario recarga la página
+monitorSesion((datosUsuario) => {
+    if (datosUsuario) {
+        // --- SESIÓN ACTIVA ---
+        console.log("Sesión recuperada:", datosUsuario.email);
+        ingresarAlDashboard(datosUsuario);
+    } else {
+        // --- NO HAY SESIÓN ---
+        console.log("Esperando inicio de sesión...");
+        viewAuth.style.display = 'block';
+        viewDashboard.classList.add('hidden-view');
+    }
+});
+
+// Función central para prender el Dashboard
+async function ingresarAlDashboard(usuario) {
+    // 1. Mostrar Dashboard
+    viewAuth.style.display = 'none';
+    viewDashboard.classList.remove('hidden-view');
+
+    // 2. Llenar Sidebar con datos del usuario
+    setText('user-email-display', usuario.email);
+    setText('user-role-display', usuario.rol ? usuario.rol.toUpperCase() : "VECINO");
+
+    // 3. Cargar la información de su JAC
+    if (usuario.jacId) {
+        await cargarInfoJAC(usuario.jacId);
+    }
+}
+
+
+// =========================================================
+// 5. SISTEMA DE NAVEGACIÓN (ROUTER DEL MENÚ)
+// =========================================================
+
+// A. Lógica del Acordeón "Libros JAC"
+if (btnToggleLibros) {
+    btnToggleLibros.addEventListener('click', () => {
+        const isHidden = submenuLibros.style.display === 'none';
+        submenuLibros.style.display = isHidden ? 'flex' : 'none';
+        iconArrowLibros.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
+    });
+}
+
+// B. Lógica de los Clics en el Menú
 menuLinks.forEach(link => {
     link.addEventListener('click', (e) => {
-        // Verificamos si el botón tiene un destino (data-target)
+        // Solo actuamos si el link tiene un destino (data-target)
         if(link.dataset.target) {
             e.preventDefault();
             
-            // A. Actualizar estilo del botón (Active)
+            // 1. Actualizar clase visual 'active'
             menuLinks.forEach(l => l.classList.remove('active'));
             link.classList.add('active');
 
-            // B. Ocultar todas las secciones
+            // 2. Ocultar TODAS las secciones
             if(sectionHome) sectionHome.classList.add('hidden-view');
             if(sectionDirectiva) sectionDirectiva.classList.add('hidden-view');
+            if(sectionLibros) sectionLibros.classList.add('hidden-view');
 
-            // C. Mostrar la sección correcta
+            // 3. Mostrar la sección solicitada
             const target = link.dataset.target;
             
             if (target === 'home') {
@@ -50,8 +111,12 @@ menuLinks.forEach(link => {
             } 
             else if (target === 'directiva') {
                 if(sectionDirectiva) sectionDirectiva.classList.remove('hidden-view');
-                // Si ya sabemos qué JAC es, cargamos los datos de la directiva
                 if(currentJacId) cargarDirectiva(currentJacId);
+            }
+            else if (target.startsWith('libro-')) {
+                if(sectionLibros) sectionLibros.classList.remove('hidden-view');
+                const tipoLibro = target.split('-')[1]; // ej: obtiene 'actas' de 'libro-actas'
+                if(currentJacId) cargarLibro(currentJacId, tipoLibro);
             }
         }
     });
@@ -59,138 +124,143 @@ menuLinks.forEach(link => {
 
 
 // =========================================================
-// 4. FUNCIONES DE CARGA DE DATOS (FIREBASE)
+// 6. FUNCIONES DE CARGA DE DATOS (FIREBASE)
 // =========================================================
 
-// --- A. Cargar Info General (Nombre, Video, NIT) ---
+// --- A. CARGAR INFO GENERAL (HOME) ---
 async function cargarInfoJAC(jacId) {
     try {
-        currentJacId = jacId; // Guardamos el ID para usarlo luego
+        currentJacId = jacId; 
         const jacRef = doc(db, "jacs", jacId);
         const jacSnap = await getDoc(jacRef);
 
         if (jacSnap.exists()) {
             const data = jacSnap.data();
             
-            // Llenar datos del Home
-            document.getElementById('jac-nombre').textContent = data.nombre;
-            document.getElementById('jac-lema').textContent = data.lema;
-            document.getElementById('jac-desc').textContent = data.descripcion;
-            document.getElementById('jac-nit').textContent = data.nit;
-            document.getElementById('jac-lugar').textContent = data.lugar;
-            document.getElementById('jac-uuid').textContent = data.uuid;
-            document.getElementById('jac-did').textContent = data.did;
-            document.getElementById('jac-video').src = data.videoUrl;
+            // Llenar Textos Home
+            setText('jac-nombre', data.nombre);
+            setText('jac-lema', data.lema);
+            setText('jac-desc', data.descripcion);
+            setText('jac-nit', data.nit);
+            setText('jac-lugar', data.lugar);
+            setText('jac-uuid', data.uuid);
+            setText('jac-did', data.did);
+            
+            // Video
+            const vid = document.getElementById('jac-video');
+            if(vid) vid.src = data.videoUrl;
 
-            // Actualizar título en Directiva también
-            const tituloDir = document.getElementById('dir-titulo');
-            if(tituloDir) tituloDir.textContent = "Gobierno " + data.nombre;
+            // Título Directiva
+            setText('dir-titulo', "Gobierno " + data.nombre);
         }
     } catch (error) {
         console.error("Error cargando JAC:", error);
     }
 }
 
-// --- B. Cargar Miembros de la Directiva ---
+// --- B. CARGAR DIRECTIVA ---
 async function cargarDirectiva(jacId) {
-    console.log("Cargando directiva de:", jacId);
     const tbody = document.getElementById('tabla-directiva-body');
     if(!tbody) return;
 
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">Cargando equipo...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px">Cargando equipo...</td></tr>';
 
     try {
         const directivaRef = collection(db, "jacs", jacId, "directiva");
         const snapshot = await getDocs(directivaRef);
         
-        tbody.innerHTML = ''; // Limpiar
+        tbody.innerHTML = ''; 
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">No hay miembros registrados aún.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">Sin miembros registrados.</td></tr>';
             // Limpiar tarjetas si no hay datos
             pintarTarjeta('card-presidente', {nombre: 'Vacante', cargo: 'Sin asignar'});
+            pintarTarjeta('card-vice', {nombre: 'Vacante', cargo: 'Sin asignar'});
             return;
         }
 
         snapshot.forEach(doc => {
             const data = doc.data();
             
-            // Lógica para repartir los datos en las tarjetas o la tabla
+            // Distribuir datos: Presidente, Vice o Tabla
             if (data.cargo.toLowerCase().includes('presidente') && !data.cargo.toLowerCase().includes('vice')) {
                 pintarTarjeta('card-presidente', data);
             } 
             else if (data.cargo.toLowerCase().includes('vice')) {
                 pintarTarjeta('card-vice', data);
-            }
+            } 
             else {
-                // Agregar a la tabla
-                const iniciales = data.nombre.substring(0,2).toUpperCase();
-                const fila = `
-                    <tr>
-                        <td style="display:flex; gap:10px; align-items:center;">
-                            <div class="avatar-circle" style="width:32px; height:32px; font-size:0.8rem;">${iniciales}</div>
-                            ${data.nombre}
-                        </td>
-                        <td>${data.cargo}</td>
-                        <td><span class="badge badge-active" style="color:#10b981; background:rgba(16,185,129,0.1); padding:4px 8px; border-radius:10px; font-size:0.7rem;">Activo</span></td>
-                    </tr>
-                `;
+                const fila = `<tr>
+                    <td style="display:flex; gap:10px; align-items:center;">
+                        <div class="avatar-circle" style="width:32px; height:32px; font-size:0.8rem;">${getIniciales(data.nombre)}</div>
+                        ${data.nombre}
+                    </td>
+                    <td>${data.cargo}</td>
+                    <td><span class="badge badge-active" style="color:#10b981; background:rgba(16,185,129,0.1); padding:4px 8px; border-radius:10px; font-size:0.7rem;">Activo</span></td>
+                </tr>`;
                 tbody.innerHTML += fila;
             }
         });
-
-    } catch (error) {
-        console.error("Error cargando directiva:", error);
-        tbody.innerHTML = '<tr><td colspan="3">Error al cargar datos.</td></tr>';
-    }
+    } catch (error) { console.error(error); }
 }
 
-// Auxiliar para pintar tarjeta pequeña
-function pintarTarjeta(elementId, data) {
-    const el = document.getElementById(elementId);
-    const iniciales = data.nombre ? data.nombre.substring(0,2).toUpperCase() : "--";
+// --- C. CARGAR LIBROS ---
+async function cargarLibro(jacId, tipoLibro) {
+    const tituloEl = document.getElementById('libro-titulo');
+    const thead = document.getElementById('libro-thead');
+    const tbody = document.getElementById('libro-tbody');
     
-    if(el) {
-        el.innerHTML = `
-            <div class="avatar-circle">${iniciales}</div>
-            <div class="member-info">
-                <h3>${data.nombre}</h3>
-                <p>${data.cargo}</p>
-            </div>
-        `;
+    if(!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Cargando registros...</td></tr>';
+
+    let coleccionNombre = "libro_" + tipoLibro;
+    
+    // Configurar Encabezados según el libro
+    if (tipoLibro === 'afiliados') {
+        tituloEl.textContent = "Libro de Afiliados";
+        thead.innerHTML = `<tr><th>Nombre</th><th>Documento</th><th>Dirección</th><th>Estado</th></tr>`;
+    } else if (tipoLibro === 'actas') {
+        tituloEl.textContent = "Libro de Actas";
+        thead.innerHTML = `<tr><th>Fecha</th><th>Título</th><th>Resumen</th><th>Acción</th></tr>`;
+    } else if (tipoLibro === 'contable') {
+        tituloEl.textContent = "Libro de Tesorería";
+        thead.innerHTML = `<tr><th>Fecha</th><th>Concepto</th><th>Tipo</th><th>Valor</th></tr>`;
+    } else {
+        tituloEl.textContent = "Libro: " + tipoLibro;
+        thead.innerHTML = `<tr><th>Información</th></tr>`;
     }
-}
 
+    try {
+        const librosRef = collection(db, "jacs", jacId, coleccionNombre);
+        const snapshot = await getDocs(librosRef);
+        
+        tbody.innerHTML = ''; 
 
-// =========================================================
-// 5. LÓGICA DE LOGIN Y REGISTRO
-// =========================================================
-
-// LOGIN
-if (formLogin) {
-    formLogin.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = document.getElementById('login-email').value;
-        const pass = document.getElementById('login-pass').value;
-
-        const resultado = await loginUsuario(email, pass);
-
-        if (resultado.success) {
-            viewAuth.style.display = 'none';
-            viewDashboard.classList.remove('hidden-view');
-
-            document.getElementById('user-email-display').textContent = resultado.email;
-            document.getElementById('user-role-display').textContent = resultado.rol.toUpperCase();
-
-            // CARGA INICIAL
-            if (resultado.jacId) {
-                await cargarInfoJAC(resultado.jacId);
-            }
+        if (snapshot.empty) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Libro vacío.</td></tr>';
+            return;
         }
-    });
+
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            let fila = "";
+            
+            if (tipoLibro === 'afiliados') {
+                fila = `<tr><td><b style="color:white">${data.nombre}</b></td><td>${data.documento}</td><td>${data.direccion}</td><td>${data.estado}</td></tr>`;
+            } else if (tipoLibro === 'actas') {
+                fila = `<tr><td>${data.fecha}</td><td><b style="color:white">${data.titulo}</b></td><td>${data.resumen}</td><td><button class="btn-editar">Ver</button></td></tr>`;
+            } else if (tipoLibro === 'contable') {
+                const color = data.tipo === 'ingreso' ? '#10b981' : '#f87171';
+                fila = `<tr><td>${data.fecha}</td><td>${data.concepto}</td><td style="color:${color}; text-transform:uppercase;">${data.tipo}</td><td style="color:white;">$${data.valor}</td></tr>`;
+            } else {
+                fila = `<tr><td>Datos no formateados</td></tr>`;
+            }
+            tbody.innerHTML += fila;
+        });
+    } catch (error) { console.error(error); }
 }
 
-// REGISTRO (Cargar lista de JACs)
+// --- D. CARGAR LISTA DE JACS (PARA REGISTRO) ---
 async function cargarListaDeJACs() {
     if (selectJac.options.length > 1) return;
     try {
@@ -205,12 +275,41 @@ async function cargarListaDeJACs() {
     } catch (e) { console.error(e); }
 }
 
-// Botones de cambio de vista Login/Registro
-const boxLogin = document.getElementById('form-box-login');
-const boxRegister = document.getElementById('form-box-register');
-const btnIrRegistro = document.getElementById('btn-ir-registro');
-const btnVolverLogin = document.getElementById('btn-volver-login');
 
+// =========================================================
+// 7. EVENTOS DE FORMULARIOS (INTERACCIÓN USUARIO)
+// =========================================================
+
+// LOGIN
+if (formLogin) {
+    formLogin.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email = document.getElementById('login-email').value;
+        const pass = document.getElementById('login-pass').value;
+        // La redirección la maneja el monitorSesion
+        await loginUsuario(email, pass);
+    });
+}
+
+// REGISTRO
+if (formRegister) {
+    formRegister.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const nombre = document.getElementById('reg-nombre').value;
+        const email = document.getElementById('reg-email').value;
+        const pass = document.getElementById('reg-pass').value;
+        const phone = document.getElementById('reg-phone').value;
+        const jacId = selectJac.value;
+
+        if(!jacId) { alert("Selecciona una comunidad"); return; }
+        await registrarUsuario(nombre, email, pass, phone, jacId);
+    });
+}
+
+// LOGOUT
+if(btnLogout) btnLogout.addEventListener('click', () => logout());
+
+// SWITCH LOGIN / REGISTRO
 if (btnIrRegistro) {
     btnIrRegistro.addEventListener('click', () => {
         boxLogin.style.display = 'none';
@@ -226,22 +325,28 @@ if (btnVolverLogin) {
     });
 }
 
-// REGISTRO SUBMIT
-if (formRegister) {
-    formRegister.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const nombre = document.getElementById('reg-nombre').value;
-        const email = document.getElementById('reg-email').value;
-        const pass = document.getElementById('reg-pass').value;
-        const phone = document.getElementById('reg-phone').value;
-        const jacId = selectJac.value;
 
-        if(!jacId) { alert("Selecciona una comunidad"); return; }
-
-        await registrarUsuario(nombre, email, pass, phone, jacId);
-    });
+// =========================================================
+// 8. HELPERS (UTILIDADES VISUALES)
+// =========================================================
+function setText(id, text) {
+    const el = document.getElementById(id);
+    if(el) el.textContent = text;
 }
 
-// LOGOUT
-const btnLogout = document.getElementById('btn-logout');
-if(btnLogout) btnLogout.addEventListener('click', () => logout());
+function getIniciales(nombre) {
+    return nombre ? nombre.split(' ').map(n => n[0]).join('').substring(0,2).toUpperCase() : "--";
+}
+
+function pintarTarjeta(elementId, data) {
+    const el = document.getElementById(elementId);
+    if(el) {
+        el.innerHTML = `
+            <div class="avatar-circle">${getIniciales(data.nombre)}</div>
+            <div class="member-info">
+                <h3>${data.nombre}</h3>
+                <p>${data.cargo}</p>
+            </div>
+        `;
+    }
+}
