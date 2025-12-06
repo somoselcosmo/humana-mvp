@@ -103,6 +103,22 @@
             </div>
         </div>
     </main>
+    <!-- VISTA 3: PANTALLA DE PENDIENTE (SALA DE ESPERA) -->
+    <div id="view-pending" class="hidden-view" style="width: 100%; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0b0f13; color: white; text-align: center;">
+        <div style="max-width: 400px; padding: 40px; border: 1px solid #1E262B; border-radius: 20px; background: #11161a;">
+            <i class="ri-shield-user-line" style="font-size: 4rem; color: #f59e0b; margin-bottom: 20px;"></i>
+            <h2 style="font-family: 'Montserrat', sans-serif; font-size: 1.8rem; margin-bottom: 10px;">Verificación Requerida</h2>
+            <p style="color: #94a3b8; line-height: 1.6; margin-bottom: 30px;">
+                Gracias por registrarte. Por seguridad, la Directiva debe verificar que resides en la comunidad antes de darte acceso.
+            </p>
+            <div style="font-size: 0.9rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 30px;">
+                Estado: <span style="color: #f59e0b; font-weight: bold;">⏳ Pendiente de Aprobación</span>
+            </div>
+            <button id="btn-logout-pending" class="search-btn" style="width: 100%; gap: 10px;">
+                <i class="ri-logout-box-line"></i> Cerrar Sesión y Volver Luego
+            </button>
+        </div>
+    </div>
 
     <!-- ================================================================= -->
     <!-- VISTA 2: DASHBOARD (ID: view-dashboard) - LIMPIO Y NATIVO         -->
@@ -393,7 +409,99 @@
     </section>
 
 </div>
+<!-- VISTA D: BANDEJA DE ENTRADA -->
+<div id="section-bandeja" class="hidden-view">
+    
+    <header class="council-header">
+        <div>
+            <h1>Comunicación</h1>
+            <p class="council-header__subtitle">Canal oficial Vecino ↔ Directiva</p>
+        </div>
+        <!-- Botón para crear nuevo mensaje -->
+        <button class="search-btn" id="btn-redactar" style="width:auto; padding:0 20px; gap:10px;">
+            <i class="ri-edit-line"></i> Redactar
+        </button>
+    </header>
 
+    <div class="inbox-layout">
+        
+        <!-- COLUMNA IZQUIERDA: LISTA DE MENSAJES -->
+        <aside class="inbox-list" style="background: #0d1317; border: 1px solid var(--border-color); border-radius: 12px; overflow-y: auto;">
+            <!-- Aquí se inyectarán los mensajes con JS -->
+            <div id="lista-mensajes">
+                <div style="padding: 20px; text-align: center; color: gray;">Cargando...</div>
+            </div>
+        </aside>
+
+        <!-- COLUMNA DERECHA: LECTURA Y ESCRITURA -->
+        <main class="inbox-content" style="background: #11161a; border: 1px solid var(--border-color); border-radius: 12px; padding: 25px;">
+            
+            <!-- ESTADO 1: NADA SELECCIONADO (Visible por defecto) -->
+            <div id="inbox-vacio" style="height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; opacity: 0.5;">
+                <i class="ri-mail-send-line" style="font-size: 4rem; margin-bottom: 10px;"></i>
+                <p>Selecciona un mensaje o redacta uno nuevo</p>
+            </div>
+
+            <!-- ESTADO 2: LEYENDO MENSAJE (Oculto) -->
+            <div id="inbox-lectura" class="hidden-view">
+                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
+                    <h2 id="msg-asunto" style="margin: 0 0 10px; font-size: 1.5rem;">Asunto del mensaje</h2>
+                    <div style="font-size: 0.85rem; color: var(--text-muted);">
+                        De: <b id="msg-remitente" style="color: white;">...</b> &bull; 
+                        Fecha: <span id="msg-fecha">...</span>
+                    </div>
+                </div>
+                <div id="msg-cuerpo" style="line-height: 1.6; color: var(--text-main);">
+                    <!-- Contenido del mensaje -->
+                </div>
+                <!-- ZONA DE RESPUESTAS -->
+                <div id="zona-respuestas" style="margin-top: 30px;">
+                    
+                    <!-- CASO A: YA HAY RESPUESTA (Se muestra esto) -->
+                    <div id="visualizar-respuesta" class="admin-response-card hidden-view">
+                        <div class="response-header">
+                            <span>Respuesta Oficial</span>
+                            <span id="resp-fecha">...</span>
+                        </div>
+                        <p id="resp-texto" style="color: #e2e8f0; line-height: 1.5;">...</p>
+                    </div>
+
+                    <!-- CASO B: NO HAY RESPUESTA Y SOY ADMIN (Se muestra formulario) -->
+                    <div id="formulario-respuesta" class="reply-area hidden-view">
+                        <h4><i class="ri-reply-line"></i> Escribir respuesta al vecino:</h4>
+                        <textarea id="txt-respuesta-admin" class="inbox-input" rows="4" placeholder="Escribe la solución o respuesta oficial aquí..."></textarea>
+                        <button id="btn-enviar-respuesta" class="form-submit" style="width: auto; background: #10b981;">
+                            <i class="ri-send-plane-fill"></i> Enviar Respuesta
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ESTADO 3: ESCRIBIENDO NUEVO (Oculto) -->
+            <div id="inbox-escritura" class="hidden-view">
+                <h2 style="margin-bottom: 20px; color: white;">Nueva Solicitud</h2>
+                <form id="form-mensaje">
+                    <input type="text" id="new-asunto" placeholder="Asunto (Ej: Mantenimiento Parque)" class="inbox-input" required>
+                    
+                    <select id="new-destinatario" class="inbox-input">
+                        <option value="admin">A: Junta Directiva</option>
+                        <option value="tesoreria">A: Tesorería</option>
+                        <option value="convivencia">A: Comité de Convivencia</option>
+                    </select>
+
+                    <textarea id="new-cuerpo" rows="8" placeholder="Describe tu solicitud detalladamente..." class="inbox-input" style="resize: none;" required></textarea>
+                    
+                    <div style="display: flex; gap: 10px;">
+                        <button type="submit" class="form-submit" style="width: auto;">Enviar Solicitud</button>
+                        <button type="button" class="form-submit secondary-btn" id="btn-cancelar-msg" style="width: auto;">Cancelar</button>
+                    </div>
+                </form>
+            </div>
+
+        </main>
+    </div>
+
+</div>
 
     <!-- FOOTER COMÚN -->
     <footer class="site-footer">

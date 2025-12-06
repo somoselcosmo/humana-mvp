@@ -5,24 +5,38 @@
 
 // 1. IMPORTACIONES
 import { loginUsuario, registrarUsuario, logout, monitorSesion } from "./auth.js";
-import { doc, getDoc, collection, getDocs } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
+import { doc, getDoc, collection, getDocs, addDoc, query, where, updateDoc  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { db } from "./firebase.js";
 
 console.log("App iniciada: Sistema Humana Completo v5 🚀");
 
 // 2. VARIABLES GLOBALES
-let currentJacId = null; 
+let currentJacId = null;
+let currentUserData = null;
 
 // 3. REFERENCIAS DEL DOM (HTML)
 // Vistas Principales
 const viewAuth = document.getElementById('view-auth');
 const viewDashboard = document.getElementById('view-dashboard');
 
+//Estado Pendiente
+const viewPending = document.getElementById('view-pending');
+const btnLogoutPending = document.getElementById('btn-logout-pending');
+
 // Secciones Internas del Dashboard
 const sectionHome = document.getElementById('section-home');
 const sectionDirectiva = document.getElementById('section-directiva');
 const sectionLibros = document.getElementById('section-libros');
 
+const sectionBandeja = document.getElementById('section-bandeja');
+
+// Elementos de la Bandeja
+const btnRedactar = document.getElementById('btn-redactar');
+const vistaVacia = document.getElementById('inbox-vacio');
+const vistaLectura = document.getElementById('inbox-lectura');
+const vistaEscritura = document.getElementById('inbox-escritura');
+const formMensaje = document.getElementById('form-mensaje');
+const btnCancelarMsg = document.getElementById('btn-cancelar-msg');
 // Menú y Navegación
 const menuLinks = document.querySelectorAll('.menu-item');
 const btnToggleLibros = document.getElementById('btn-toggle-libros');
@@ -59,17 +73,29 @@ monitorSesion((datosUsuario) => {
 
 // Función central para prender el Dashboard
 async function ingresarAlDashboard(usuario) {
-    // 1. Mostrar Dashboard
+    currentUserData = usuario; // Guardamos datos globales
+    // Limpiar todas las vistas primero
     viewAuth.style.display = 'none';
-    viewDashboard.classList.remove('hidden-view');
+    viewDashboard.classList.add('hidden-view');
+    if(viewPending) viewPending.classList.add('hidden-view');
 
-    // 2. Llenar Sidebar con datos del usuario
-    setText('user-email-display', usuario.email);
-    setText('user-role-display', usuario.rol ? usuario.rol.toUpperCase() : "VECINO");
+    // --- EL PORTERO DE SEGURIDAD ---
+    if (usuario.rol === 'pendiente') {
+        // A. SI ESTÁ PENDIENTE -> SALA DE ESPERA
+        console.log("Acceso restringido: Usuario pendiente.");
+        if(viewPending) viewPending.classList.remove('hidden-view');
+        
+    } else {
+        // B. SI ES VECINO O ADMIN -> DASHBOARD
+        console.log("Acceso concedido:", usuario.rol);
+        viewDashboard.classList.remove('hidden-view');
 
-    // 3. Cargar la información de su JAC
-    if (usuario.jacId) {
-        await cargarInfoJAC(usuario.jacId);
+        setText('user-email-display', usuario.email);
+        setText('user-role-display', usuario.rol ? usuario.rol.toUpperCase() : "VECINO");
+
+        if (usuario.jacId) {
+            await cargarInfoJAC(usuario.jacId);
+        }
     }
 }
 
@@ -117,6 +143,10 @@ menuLinks.forEach(link => {
                 if(sectionLibros) sectionLibros.classList.remove('hidden-view');
                 const tipoLibro = target.split('-')[1]; // ej: obtiene 'actas' de 'libro-actas'
                 if(currentJacId) cargarLibro(currentJacId, tipoLibro);
+            }
+            else if (target === 'bandeja') {
+                if(sectionBandeja) sectionBandeja.classList.remove('hidden-view');
+                if(currentJacId) cargarMensajes(currentJacId); 
             }
         }
     });
@@ -275,6 +305,191 @@ async function cargarListaDeJACs() {
     } catch (e) { console.error(e); }
 }
 
+// --- E. CARGAR MENSAJES (CON NOMBRE EN LISTA) ---
+async function cargarMensajes(jacId) {
+    console.log("🔍 Buscando mensajes en la JAC:", jacId); // <--- AGREGA ESTO
+    const contenedor = document.getElementById('lista-mensajes');
+    if(!contenedor) return;
+    
+    contenedor.innerHTML = '<div style="padding:20px; text-align:center">Cargando...</div>';
+
+    try {
+        const msgsRef = collection(db, "jacs", jacId, "mensajes");
+        let q;
+
+        if (currentUserData.rol.includes('admin')) {
+            q = msgsRef; 
+        } else {
+            q = query(msgsRef, where("remitente", "==", currentUserData.email));
+        }
+
+        const snapshot = await getDocs(q);
+        contenedor.innerHTML = '';
+
+        if (snapshot.empty) {
+            contenedor.innerHTML = '<div style="padding:20px; text-align:center; color:gray">Bandeja vacía.</div>';
+            return;
+        }
+
+        let listaMensajes = [];
+        snapshot.forEach(doc => {
+            listaMensajes.push({ id: doc.id, ...doc.data() });
+        });
+
+        listaMensajes.sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
+
+        const nombresAreas = { 'admin': 'Junta Directiva', 'tesoreria': 'Tesorería', 'convivencia': 'Convivencia' };
+
+        listaMensajes.forEach(data => {
+            const item = document.createElement('div');
+            item.className = 'message-item';
+            
+            if (data.estado === 'no_leido') item.classList.add('unread');
+            else item.classList.add('read');
+            
+            let infoContexto = "";
+            const nombreArea = nombresAreas[data.destinatario] || data.destinatario; 
+
+            // --- AQUÍ ESTÁ EL CAMBIO VISUAL ---
+            if (currentUserData.rol.includes('admin')) {
+                // Preferimos el NOMBRE, si no existe (mensaje viejo), usamos el email
+                const quienEnvia = data.remitenteNombre || data.remitenteEmail || data.remitente;
+                
+                infoContexto = `<span style="color:#77c7ff; font-weight:bold;">[${nombreArea}]</span> <span style="font-size:0.9em">De: ${quienEnvia}</span>`;
+            } else {
+                infoContexto = `Para: ${nombreArea}`;
+            }
+
+            item.innerHTML = `
+                <h4 style="margin-bottom:4px;">${data.asunto}</h4>
+                <p>${infoContexto}</p>
+                <p style="font-size:0.75rem; margin-top:2px; opacity:0.6;">${data.fecha}</p>
+            `;
+            
+            item.addEventListener('click', () => verMensajeCompleto(data, data.id, item));
+            contenedor.appendChild(item);
+        });
+
+    } catch (error) {
+        console.error("Error cargando mensajes:", error);
+    }
+}
+
+// --- VER DETALLE ---
+async function verMensajeCompleto(data, mensajeId, elementoHTML) {
+    // 1. Mostrar vista base
+    vistaVacia.classList.add('hidden-view');
+    vistaEscritura.classList.add('hidden-view');
+    vistaLectura.classList.remove('hidden-view');
+
+    // 2. Llenar datos originales
+    setText('msg-asunto', data.asunto);
+    setText('msg-remitente', data.remitente);
+    setText('msg-fecha', data.fecha);
+    document.getElementById('msg-cuerpo').innerText = data.cuerpo;
+
+    // 3. GESTIÓN DE LA RESPUESTA
+    const boxVisual = document.getElementById('visualizar-respuesta');
+    const boxForm = document.getElementById('formulario-respuesta');
+    
+    // Limpiamos estados previos
+    boxVisual.classList.add('hidden-view');
+    boxForm.classList.add('hidden-view');
+
+    // Guardamos el ID actual en el botón para saber a cuál responder
+    const btnResponder = document.getElementById('btn-enviar-respuesta');
+    if(btnResponder) btnResponder.dataset.msgId = mensajeId; 
+
+    if (data.respuesta) {
+        // CASO A: YA TIENE RESPUESTA (Visible para todos)
+        boxVisual.classList.remove('hidden-view');
+        setText('resp-texto', data.respuesta);
+        setText('resp-fecha', data.fechaRespuesta || "");
+    } 
+    else if (currentUserData.rol === 'admin') {
+        // CASO B: NO TIENE RESPUESTA Y SOY ADMIN (Mostrar Formulario)
+        boxForm.classList.remove('hidden-view');
+        document.getElementById('txt-respuesta-admin').value = ""; // Limpiar input
+    }
+    // Caso C: Soy vecino y no hay respuesta -> No mostramos nada extra.
+
+    // 4. MARCAR COMO LEÍDO (Si aplica)
+    if (currentUserData.rol === 'admin' && data.estado === 'no_leido') {
+        try {
+            const msgRef = doc(db, "jacs", currentJacId, "mensajes", mensajeId);
+            await updateDoc(msgRef, { estado: 'leido' });
+            elementoHTML.classList.remove('unread');
+            elementoHTML.classList.add('read');
+            data.estado = 'leido'; 
+        } catch (e) { console.error(e); }
+    }
+}
+
+// --- F. ENVIAR MENSAJE NUEVO (CON NOMBRE Y EMAIL) ---
+async function enviarMensajeNuevo(asunto, destinatario, cuerpo) {
+    try {
+        // Usamos la variable global currentUserData para sacar los datos exactos
+        const nombreRemitente = currentUserData.nombre || "Vecino";
+        const emailRemitente = currentUserData.email;
+        
+        await addDoc(collection(db, "jacs", currentJacId, "mensajes"), {
+            asunto: asunto,
+            destinatario: destinatario,
+            cuerpo: cuerpo,
+            // GUARDAMOS AMBOS DATOS:
+            remitenteNombre: nombreRemitente, 
+            remitenteEmail: emailRemitente,
+            // Mantenemos 'remitente' antiguo por compatibilidad temporal o usamos email
+            remitente: emailRemitente, 
+            fecha: new Date().toLocaleDateString(),
+            timestamp: Date.now(),
+            estado: 'no_leido'
+        });
+
+        alert("Mensaje enviado correctamente.");
+        
+        vistaEscritura.classList.add('hidden-view');
+        vistaVacia.classList.remove('hidden-view');
+        cargarMensajes(currentJacId);
+        document.getElementById('form-mensaje').reset();
+
+    } catch (error) {
+        console.error(error);
+        alert("Error al enviar mensaje");
+    }
+}
+// --- G. ENVIAR RESPUESTA ADMIN ---
+async function enviarRespuestaAdmin() {
+    const btn = document.getElementById('btn-enviar-respuesta');
+    const msgId = btn.dataset.msgId; // Recuperamos el ID que guardamos antes
+    const texto = document.getElementById('txt-respuesta-admin').value;
+
+    if (!texto.trim()) return alert("Escribe una respuesta.");
+
+    try {
+        const msgRef = doc(db, "jacs", currentJacId, "mensajes", msgId);
+        
+        await updateDoc(msgRef, {
+            respuesta: texto,
+            fechaRespuesta: new Date().toLocaleDateString(),
+            estado: 'solucionado' // Cambiamos el estado a solucionado
+        });
+
+        alert("Respuesta enviada.");
+        
+        // Truco visual: Ocultar formulario y mostrar la respuesta in-situ
+        document.getElementById('formulario-respuesta').classList.add('hidden-view');
+        const boxVisual = document.getElementById('visualizar-respuesta');
+        boxVisual.classList.remove('hidden-view');
+        setText('resp-texto', texto);
+        setText('resp-fecha', "Ahora mismo");
+
+    } catch (error) {
+        console.error(error);
+        alert("Error al guardar respuesta.");
+    }
+}
+
 
 // =========================================================
 // 7. EVENTOS DE FORMULARIOS (INTERACCIÓN USUARIO)
@@ -323,6 +538,45 @@ if (btnVolverLogin) {
         boxRegister.style.display = 'none';
         boxLogin.style.display = 'block';
     });
+}
+// --- EVENTOS BANDEJA ---
+
+// 1. Botón Redactar (Muestra formulario)
+if (btnRedactar) {
+    btnRedactar.addEventListener('click', () => {
+        vistaVacia.classList.add('hidden-view');
+        vistaLectura.classList.add('hidden-view');
+        vistaEscritura.classList.remove('hidden-view');
+    });
+}
+
+// 2. Botón Cancelar (Vuelve al inicio)
+if (btnCancelarMsg) {
+    btnCancelarMsg.addEventListener('click', () => {
+        vistaEscritura.classList.add('hidden-view');
+        vistaVacia.classList.remove('hidden-view');
+    });
+}
+
+// 3. Enviar Formulario
+if (formMensaje) {
+    formMensaje.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const asunto = document.getElementById('new-asunto').value;
+        const dest = document.getElementById('new-destinatario').value;
+        const cuerpo = document.getElementById('new-cuerpo').value;
+
+        await enviarMensajeNuevo(asunto, dest, cuerpo);
+    });
+}
+// Listener para el botón de respuesta
+const btnResp = document.getElementById('btn-enviar-respuesta');
+if(btnResp) {
+    btnResp.addEventListener('click', enviarRespuestaAdmin);
+}
+// Logout desde vista pendiente
+if (btnLogoutPending) {
+    btnLogoutPending.addEventListener('click', () => logout());
 }
 
 

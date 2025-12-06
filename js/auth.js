@@ -38,7 +38,7 @@ export async function registrarUsuario(nombre, email, password, telefono, jacId)
             nombre: nombre,
             email: email,
             telefono: telefono,
-            rol: "vecino",
+            rol: "pendiente",
             jacId: juntaAsignada,
             fechaRegistro: new Date().toISOString()
         });

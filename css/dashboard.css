@@ -453,3 +453,91 @@ td {
     display: flex; justify-content: space-between; align-items: center;
     border: 1px solid var(--border-color);
 }
+/* =========================================
+   ESTILOS BANDEJA DE ENTRADA
+   ========================================= */
+.inbox-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr; /* Lista fija, contenido flexible */
+    gap: 20px;
+    height: calc(100vh - 250px); /* Altura dinámica */
+}
+
+/* Lista de mensajes (Izquierda) */
+.message-item {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+.message-item:hover { background: rgba(255,255,255,0.05); }
+.message-item.active { background: rgba(66, 184, 255, 0.1); border-left: 3px solid var(--cyber-blue); }
+.message-item h4 { margin: 0 0 5px; color: #fff; font-size: 0.9rem; }
+.message-item p { margin: 0; color: var(--text-muted); font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+/* Formulario de Redacción (Derecha) */
+.inbox-input {
+    width: 100%;
+    background: #0d1317;
+    border: 1px solid var(--border-color);
+    color: white;
+    padding: 12px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    font-family: inherit;
+}
+.inbox-input:focus { border-color: var(--cyber-blue); outline: none; }
+
+@media (max-width: 768px) {
+    .inbox-layout { grid-template-columns: 1fr; } /* En móvil, una sola columna */
+    .inbox-list { display: none; } /* Ocultamos lista al leer (lógica futura) */
+}
+/* ESTADO NO LEÍDO (Resaltado) */
+.message-item.unread {
+    background: rgba(119, 199, 255, 0.08); /* Fondo azul muy sutil */
+    border-left: 3px solid var(--cyber-blue); /* Borde izquierdo azul */
+}
+
+.message-item.unread h4 {
+    font-weight: 800; /* Título más grueso */
+    color: #ffffff;
+}
+
+.message-item.read {
+    opacity: 0.7; /* Mensajes leídos un poco más apagados */
+    border-left: 3px solid transparent;
+}
+/* ESTILOS DE RESPUESTA ADMINISTRATIVA */
+
+/* Caja que muestra la respuesta ya enviada */
+.admin-response-card {
+    background: rgba(16, 185, 129, 0.1); /* Verde muy suave */
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 20px;
+    border-left: 4px solid #10b981;
+}
+
+.response-header {
+    font-size: 0.8rem;
+    color: #10b981;
+    font-weight: bold;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    display: flex;
+    justify-content: space-between;
+}
+
+/* Área para escribir la respuesta (Solo Admins) */
+.reply-area {
+    margin-top: 25px;
+    padding-top: 20px;
+    border-top: 1px dashed var(--border-color);
+}
+
+.reply-area h4 {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
