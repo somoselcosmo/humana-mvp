@@ -16,6 +16,8 @@
     --text-muted: #94a3b8;    /* Texto Secundario */
     --cyber-blue: #77c7ff;    /* Acento Azul */
     --border-color: #1E262B;  /* Bordes sutiles */
+    --bg-panel: #0d1317;      /* Fondo Paneles */
+    --scroll: rgb(15, 61, 90);        /* Fondo Scroll */
     
     /* Medidas */
     --header-height: 190px;
@@ -464,6 +466,31 @@ td {
 }
 
 /* Lista de mensajes (Izquierda) */
+.inbox-list {
+    background: #0d1317; border: 1px solid var(--border-color); border-radius: 12px; overflow-y: auto;
+    scrollbar-width: thin;
+    scrollbar-color: var(--scroll) rgba(11,15,19,0.6);
+}
+
+.inbox-list::-webkit-scrollbar {
+    width: 8px;
+}
+
+.inbox-list::-webkit-scrollbar-track {
+    background: rgba(8, 12, 15, 0.85);
+    border-radius: 8px;
+}
+
+.inbox-list::-webkit-scrollbar-thumb {
+    background: linear-gradient(180deg, #59d4ff 0%, #7a5cff 100%);
+    border-radius: 8px;
+    box-shadow: inset 0 0 4px rgba(0,0,0,0.4);
+}
+
+.inbox-list::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(180deg, #6de6ff 0%, #8d6bff 100%);
+}
+
 .message-item {
     padding: 15px;
     border-bottom: 1px solid var(--border-color);
@@ -540,4 +567,193 @@ td {
     font-size: 0.9rem;
     color: var(--text-muted);
     margin-bottom: 10px;
+}
+/* ESTILOS DETALLE MENSAJE (MEJORADO) */
+.msg-detail-header {
+    display: flex;
+    align-items: center;
+    gap: 15px; /* Separación entre avatar y texto */
+    padding-bottom: 20px;
+    margin-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.msg-avatar {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #1e262b, #11161a);
+    border: 1px solid var(--border-color);
+    color: var(--cyber-blue);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.msg-meta h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    color: #ffffff;
+}
+
+.msg-meta p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+/* GLOBO DE NOTIFICACIÓN EN MENÚ */
+.menu-badge {
+    background-color: var(--cyber-blue); /* Rojo intenso */
+    color: var(--border-color);
+    font-size: 0.7rem;
+    font-weight: 800;
+    padding: 2px 8px;
+    border-radius: 15px; /* Redondeado */
+    margin-left: auto; /* Esto lo empuja a la derecha del todo */
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); /* Resplandor rojo */
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { box-shadow: 0 0 0 0 rgba(39, 224, 221, 0.4); }
+    70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+/* ESTILOS DEL MODAL UNIVERSAL */
+.modal-overlay {
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background: rgba(0, 0, 0, 0.8); /* Fondo negro semitransparente */
+    backdrop-filter: blur(5px);
+    z-index: 1000; /* Encima de todo */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    animation: fadeIn 0.3s forwards;
+}
+
+.modal-content {
+    background: #11161a;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    width: 90%;
+    max-width: 500px; /* No muy ancho */
+    padding: 30px;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+    transform: translateY(20px);
+    animation: slideUp 0.3s forwards;
+}
+
+.modal-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 20px; border-bottom: 1px solid var(--border-color);
+    padding-bottom: 15px;
+}
+
+.modal-header h2 { margin: 0; color: var(--cyber-blue); font-size: 1.5rem; }
+
+/* Animaciones */
+@keyframes fadeIn { to { opacity: 1; } }
+@keyframes slideUp { to { transform: translateY(0); } }
+/* =========================================
+   ESTILOS ESPECÍFICOS: LIBRO DE ACTAS
+   ========================================= */
+
+/* GRID DE ESTADÍSTICAS (Las 3 tarjetas de arriba) */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;
+    margin-bottom: 30px;
+}
+
+.stat-card {
+    background: #0d1317;
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.stat-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+}
+
+.stat-number {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: white;
+}
+
+.stat-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 5px;
+}
+
+/* BADGES DE ESTADO (Colores de la tabla) */
+.acta-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-align: center;
+    display: inline-block;
+}
+
+.badge-green {
+    background: rgba(16, 185, 129, 0.15);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+.badge-yellow {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.badge-blue {
+    background: rgba(59, 130, 246, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+/* BARRA DE HERRAMIENTAS (Tabs y Botones) */
+.actas-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.tabs-group {
+    display: flex;
+    gap: 20px;
+}
+
+.tab-link {
+    color: var(--text-muted);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding-bottom: 5px;
+    border-bottom: 2px solid transparent;
+}
+
+.tab-link.active {
+    color: white;
+    border-color: var(--cyber-blue);
 }

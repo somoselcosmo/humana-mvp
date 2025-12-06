@@ -34,24 +34,64 @@
             <div class="login-shell">
                 
                 <!-- HERO (Izquierda) -->
-                <section class="login-hero">
-                    <header class="hero-top">
-                        <div class="hero-brand">
-                            <img src="./assets/img/logo.png" alt="Humana Digital" class="hero-logo" loading="lazy">
-                            <div class="brand__text">
-                                <h1 class="brand__title">HUMANA</h1>
-                                <h2 class="brand__subtitle" aria-label="DIGITAL">
-                                    <span aria-hidden="true">D</span><span aria-hidden="true">I</span><span aria-hidden="true">G</span><span aria-hidden="true">I</span><span aria-hidden="true">T</span><span aria-hidden="true">A</span><span aria-hidden="true">L</span>
-                                </h2>
-                            </div>
-                        </div>
-                        <p class="hero-tag">Plataforma institucional para gestionar comunidades.</p>
-                    </header>
-                    <div class="hero-highlight">
-                        <h1>Impulsa tu Junta con decisiones conectadas</h1>
-                        <p>Coordina agendas, salones virtuales y documentación.</p>
-                    </div>
-                </section>
+                <!-- SECCIÓN IZQUIERDA (HERO) MEJORADA -->
+<section class="login-hero">
+    
+    <!-- 1. CABECERA: MARCA -->
+    <header class="hero-top">
+        <div class="hero-brand">
+            <img src="./assets/img/logo.png" alt="Humana Digital" class="hero-logo" loading="lazy">
+            <div class="brand__text">
+                <h1 class="brand__title">HUMANA</h1>
+                <h2 class="brand__subtitle">
+                    <span>D</span><span>I</span><span>G</span><span>I</span><span>T</span><span>A</span><span>L</span>
+                </h2>
+            </div>
+        </div>
+        <div class="hero-badge">Plataforma Gubernamental v1.0</div>
+    </header>
+
+    <!-- 2. CONTENIDO CENTRAL: BENEFICIOS -->
+    <div class="hero-highlight">
+        <h1 class="highlight-title">Impulsa tu Junta con <br> <span class="text-cyber">decisiones conectadas</span></h1>
+        <p class="highlight-desc">Centraliza la gestión comunitaria, coordina agendas y asegura la transparencia en un solo lugar.</p>
+        
+        <!-- Lista de características con iconos -->
+        <ul class="hero-features">
+            <li>
+                <span class="feature-icon"><i class="ri-shield-check-line"></i></span>
+                <div>
+                    <strong>Votaciones Seguras</strong>
+                    <span class="feature-sub">Registro inmutable de decisiones.</span>
+                </div>
+            </li>
+            <li>
+                <span class="feature-icon"><i class="ri-folder-open-line"></i></span>
+                <div>
+                    <strong>Libros Digitales</strong>
+                    <span class="feature-sub">Actas y afiliados siempre a mano.</span>
+                </div>
+            </li>
+            <li>
+                <span class="feature-icon"><i class="ri-global-line"></i></span>
+                <div>
+                    <strong>Conexión Nacional</strong>
+                    <span class="feature-sub">Articulación con entidades públicas.</span>
+                </div>
+            </li>
+        </ul>
+    </div>
+
+    <!-- 3. FOOTER: ESTADO DEL SISTEMA -->
+    <footer class="hero-footer">
+        <div class="system-status">
+            <span class="status-dot"></span>
+            <span>Sistemas Operativos</span>
+        </div>
+        <div class="hero-copyright">© 2025 Humana Digitales</div>
+    </footer>
+
+</section>
 
                 <!-- PANEL (Derecha) -->
                 <section class="login-panel">
@@ -207,6 +247,7 @@
                     <a href="#" class="menu-item" data-target="bandeja">
                         <span class="menu-icon"><i class="ri-mail-line"></i></span>
                         <span>Bandeja</span>
+                        <span id="badge-mensajes" class="menu-badge hidden-view">0</span>
                     </a>
 
                     <div class="aside-section-title">ADMINISTRACIÓN</div>
@@ -391,7 +432,7 @@
         </div>
         <div>
             <!-- Botón para agregar registros (Solo admins) -->
-            <button class="search-btn" style="width:auto; padding:0 20px; gap:10px;">
+            <button id="btn-nuevo-registro" class="search-btn" style="width:auto; padding:0 20px; gap:10px;">
                 <i class="ri-add-line"></i> Nuevo Registro
             </button>
         </div>
@@ -426,7 +467,7 @@
     <div class="inbox-layout">
         
         <!-- COLUMNA IZQUIERDA: LISTA DE MENSAJES -->
-        <aside class="inbox-list" style="background: #0d1317; border: 1px solid var(--border-color); border-radius: 12px; overflow-y: auto;">
+        <aside class="inbox-list">
             <!-- Aquí se inyectarán los mensajes con JS -->
             <div id="lista-mensajes">
                 <div style="padding: 20px; text-align: center; color: gray;">Cargando...</div>
@@ -444,13 +485,25 @@
 
             <!-- ESTADO 2: LEYENDO MENSAJE (Oculto) -->
             <div id="inbox-lectura" class="hidden-view">
-                <div style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 20px;">
-                    <h2 id="msg-asunto" style="margin: 0 0 10px; font-size: 1.5rem;">Asunto del mensaje</h2>
-                    <div style="font-size: 0.85rem; color: var(--text-muted);">
-                        De: <b id="msg-remitente" style="color: white;">...</b> &bull; 
-                        Fecha: <span id="msg-fecha">...</span>
-                    </div>
-                </div>
+                <!-- ENCABEZADO DEL MENSAJE -->
+<div class="msg-detail-header">
+    <!-- El JS llenará el avatar aquí -->
+    <div id="msg-avatar-container" class="msg-avatar">--</div>
+    
+    <div class="msg-meta">
+        <!-- Asunto Grande -->
+        <h3 id="msg-asunto" style="font-size: 1.3rem; margin-bottom: 5px; color: var(--cyber-blue);">Asunto...</h3>
+        
+        <!-- Nombre -->
+        <div style="color: white; font-weight: 600; margin-bottom: 2px;" id="msg-nombre-completo">Nombre del Vecino</div>
+        
+        <!-- Correo y Fecha -->
+        <p>
+            <span id="msg-email">correo@ejemplo.com</span> &bull; 
+            <span id="msg-fecha">Fecha</span>
+        </p>
+    </div>
+</div>
                 <div id="msg-cuerpo" style="line-height: 1.6; color: var(--text-main);">
                     <!-- Contenido del mensaje -->
                 </div>
@@ -511,7 +564,26 @@
 </section>
         </main>
     </div>
-
+    <!-- ========================================== -->
+    <!-- MODAL UNIVERSAL DE REGISTRO                -->
+    <!-- ========================================== -->
+    <div id="modal-registro" class="modal-overlay hidden-view">
+        <div class="modal-content">
+            <header class="modal-header">
+                <h2 id="modal-titulo-texto">Nuevo Registro</h2>
+                <button id="btn-cerrar-modal" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+            </header>
+            
+            <!-- Aquí JS inyectará los inputs automáticamente -->
+            <form id="form-modal-dinamico">
+                <div id="modal-campos-container" style="display:flex; flex-direction:column; gap:15px;"></div>
+                
+                <div style="margin-top: 25px; text-align: right;">
+                    <button type="submit" class="form-submit" style="width: auto; padding: 10px 30px;">Guardar Registro</button>
+                </div>
+            </form>
+        </div>
+    </div>
     <!-- LÓGICA DE JAVASCRIPT -->
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/auth.js"></script>
