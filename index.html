@@ -116,27 +116,6 @@
                                 </button>
                             </form>
                         </div>
-
-                        <!-- Register Form -->
-                        <div id="form-box-register" style="display: none;">
-                            <div class="panel-chip">Registro Vecinal</div>
-                            <h2>Únete a tu JAC</h2>
-                            <form class="panel-form" id="form-register">
-                                <label class="form-field"><span>Nombre</span><input type="text" id="reg-nombre" required></label>
-                                <label class="form-field"><span>Email</span><input type="email" id="reg-email" required></label>
-                                <label class="form-field"><span>Clave</span><input type="password" id="reg-pass" required></label>
-                                <label class="form-field"><span>Teléfono</span><input type="tel" id="reg-phone" required></label>
-                                <label class="form-field">
-                                <span>Selecciona tu Comunidad</span>
-                                    <!-- Le ponemos required para que sea obligatorio elegir una -->
-                                    <select id="reg-jac" required style="cursor: pointer;">
-                                        <option value="" disabled selected>-- Cargando Juntas... --</option>
-                                    </select>
-                                </label>
-                                <button type="submit" class="form-submit">Registrarme</button>
-                                <a href="#" id="btn-volver-login" style="text-align:center; display:block; margin-top:10px;">Volver</a>
-                            </form>
-                        </div>
                     </div>
                 </section>
             </div>
@@ -145,10 +124,12 @@
     <!-- VISTA 3: PANTALLA DE PENDIENTE (SALA DE ESPERA) -->
     <div id="view-pending" class="hidden-view" style="width: 100%; min-height: 100vh; display: flex; align-items: center; justify-content: center; background: #0b0f13; color: white; text-align: center;">
         <div style="max-width: 400px; padding: 40px; border: 1px solid #1E262B; border-radius: 20px; background: #11161a;">
-            <i class="ri-shield-user-line" style="font-size: 4rem; color: #f59e0b; margin-bottom: 20px;"></i>
-            <h2 style="font-family: 'Montserrat', sans-serif; font-size: 1.8rem; margin-bottom: 10px;">Verificación Requerida</h2>
+            <i class="ri-checkbox-circle-line" style="font-size: 4rem; color: #10b981; margin-bottom: 20px;"></i>
+            <h2 style="font-family: 'Montserrat', sans-serif; font-size: 1.8rem; margin-bottom: 10px;">¡Pre-afiliación Exitosa!</h2>
             <p style="color: #94a3b8; line-height: 1.6; margin-bottom: 30px;">
-                Gracias por registrarte. Por seguridad, la Directiva debe verificar que resides en la comunidad antes de darte acceso.
+                Tu cuenta ha sido creada correctamente. Ahora estás en <b>proceso de validación</b> por parte de la Junta Directiva.
+                <br><br>
+                Te notificaremos cuando tu acceso sea aprobado.
             </p>
             <div style="font-size: 0.9rem; background: rgba(255,255,255,0.05); padding: 15px; border-radius: 10px; margin-bottom: 30px;">
                 Estado: <span style="color: #f59e0b; font-weight: bold;">⏳ Pendiente de Aprobación</span>
@@ -355,69 +336,27 @@
     <!-- VISTA B: DIRECTIVA (Oculta por defecto)    -->
     <!-- ========================================== -->
     <div id="section-directiva" class="hidden-view">
+        
+
+<header class="council-header">
+    <div>
+        <h1 id="dir-titulo">Gobierno JAC</h1>
+        <p class="council-header__subtitle">Directiva, comités de trabajo y delegados</p>
+    </div>
+    <div style="text-align:right;">
+        <span style="color:#aaa; font-size:0.8rem; display:block;">VIGENCIA</span>
+        <span style="color:white; font-family:monospace; background:#1e262b; padding:5px 10px; border-radius:8px; border:1px solid #333;">2024 - 2028</span>
+    </div>
+</header>
+
+<!-- AQUÍ SE PINTARÁN LAS TARJETAS AUTOMÁTICAMENTE -->
+<div id="grid-gobierno" class="gov-grid">
+    <!-- El JS llenará esto -->
+</div>
+
+<!-- MÁS ABAJO IRÁN LOS OTROS BLOQUES (FISCAL, CONVIVENCIA) LUEGO -->
     
-        <header class="council-header">
-            <div>
-                <h1 id="dir-titulo">Gobierno JAC</h1>
-                <p class="council-header__subtitle">Directiva, comités de trabajo y delegados</p>
-            </div>
-            <label class="council-select">
-                <span>Vigencia</span>
-                <select><option>2024-2028</option></select>
-            </label>
-        </header>
-    
-        <!-- TARJETAS PRINCIPALES -->
-        <section class="council-panels">
-            <!-- Tarjeta Presidente -->
-            <article class="council-card">
-                <div class="card-label">Junta Directiva Actual</div>
-                <h3>Presidente(a)</h3>
-                
-                <div class="member-profile" id="card-presidente">
-                    <div class="avatar-circle">--</div>
-                    <div class="member-info">
-                        <h3>Cargando...</h3>
-                        <p>...</p>
-                    </div>
-                </div>
-                <div style="margin-top:auto;">
-                    <button class="btn-editar" style="background:var(--border-color);">Ver perfil →</button>
-                </div>
-            </article>
-    
-            <!-- Tarjeta Vicepresidente -->
-            <article class="council-card">
-                <div class="card-label">Vicepresidencia</div>
-                <h3>Suplente Legal</h3>
-                <div class="member-profile" id="card-vice">
-                    <div class="avatar-circle">--</div>
-                    <div class="member-info">
-                        <h3>Vacante</h3>
-                        <p>Sin asignar</p>
-                    </div>
-                </div>
-            </article>
-        </section>
-    
-        <!-- TABLA CONCILIADORES -->
-        <section class="council-section">
-            <header class="council-section__header">
-                <div><h2>Equipo Directivo Completo</h2></div>
-            </header>
-            <div class="council-table">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Nombre</th><th>Rol</th><th>Estado</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tabla-directiva-body">
-                        <!-- Se llena con JS -->
-                    </tbody>
-                </table>
-            </div>
-        </section>
+        
     
     </div> <!-- FIN DE SECTION DIRECTIVA -->
     <!-- VISTA C: VISOR DE LIBROS (Genérico) -->
@@ -431,7 +370,7 @@
         </div>
         <div>
             <!-- Botón para agregar registros (Solo admins) -->
-            <button id="btn-nuevo-registro" class="search-btn" style="width:auto; padding:0 20px; gap:10px;">
+            <button id="btn-nuevo-registro" class="search-btn" style="display: none; width:auto; padding:0 20px; gap:10px;">
                 <i class="ri-add-line"></i> Nuevo Registro
             </button>
         </div>
@@ -563,6 +502,127 @@
 </section>
         </main>
     </div>
+    <!-- ================================================================= -->
+<!-- VISTA 3: REGISTRO COMPLETO (AFILIACIÓN)                           -->
+<!-- ================================================================= -->
+<main id="view-register" class="hidden-view" style="width: 100%; min-height: 100vh; background: #04080b;">
+    
+    <div class="register-container">
+        <!-- Cabecera del Formulario -->
+        <header class="register-header">
+            <img src="./assets/img/logo.png" alt="Humana" style="height: 60px;">
+            <div>
+                <h2 style="color:white; margin:0;">Afiliación Digital</h2>
+                <p style="color:var(--text-muted); margin:0;">Registro Único Comunal y de Afiliados (RUCA)</p>
+            </div>
+        </header>
+
+        <form id="form-register-full" class="register-grid">
+            
+            <!-- SECCIÓN 1: DATOS DE LA CUENTA -->
+            <div class="form-section-title">1. Datos de Acceso</div>
+            
+            <div class="form-group">
+                <label>Correo Electrónico *</label>
+                <input type="email" id="reg-email" required placeholder="tu@correo.com">
+            </div>
+            
+            <div class="form-group">
+                <label>Contraseña *</label>
+                <input type="password" id="reg-pass" required placeholder="Mínimo 6 caracteres">
+            </div>
+
+            <!-- SECCIÓN 2: IDENTIFICACIÓN PERSONAL -->
+            <div class="form-section-title">2. Identificación del Afiliado</div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Nombres *</label>
+                    <input type="text" id="reg-nombres" required>
+                </div>
+                <div class="form-group">
+                    <label>Apellidos *</label>
+                    <input type="text" id="reg-apellidos" required>
+                </div>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Tipo Documento *</label>
+                    <select id="reg-tipo-doc" required>
+                        <option value="CC">Cédula de Ciudadanía</option>
+                        <option value="TI">Tarjeta de Identidad</option>
+                        <option value="CE">Cédula de Extranjería</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Número Documento *</label>
+                    <input type="number" id="reg-num-doc" required>
+                </div>
+                <div class="form-group">
+        <label>Fecha de Nacimiento * (Mayores de 14 años)</label>
+        <input type="date" id="reg-fecha-nac" required>
+    </div>
+    
+    <!-- NUEVO CAMPO: GÉNERO -->
+    <div class="form-group">
+        <label>Género *</label>
+        <select id="reg-genero" required>
+            <option value="" disabled selected>Seleccione...</option>
+            <option value="Hombre">Hombre</option>
+            <option value="Mujer">Mujer</option>
+            <option value="Prefiero no responder">Prefiero no responder</option>
+        </select>
+    </div>
+            </div>
+            <!-- SECCIÓN 3: UBICACIÓN Y CONTACTO -->
+            <div class="form-section-title">3. Residencia y Contacto</div>
+
+            <div class="form-group">
+                <label>Selecciona tu Comunidad (JAC) *</label>
+                <select id="reg-jac" required>
+                    <option value="" disabled selected>-- Cargando Juntas... --</option>
+                </select>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Dirección / Vereda / Sector *</label>
+                    <input type="text" id="reg-direccion" required placeholder="Ej: Vereda El Río, Finca La Esperanza">
+                </div>
+                <div class="form-group">
+                    <label>Celular / WhatsApp *</label>
+                    <input type="tel" id="reg-telefono" required>
+                </div>
+            </div>
+
+            <!-- SECCIÓN 4: INTERÉS COMUNITARIO -->
+            <div class="form-section-title">4. Participación</div>
+            
+            <div class="form-group">
+    <label>Comisión de Trabajo o Rol *</label>
+    <p style="font-size:0.8rem; color:#6b7280; margin-bottom:5px;">¿En qué área te gustaría apoyar? Si no sabes, elige Asamblea.</p>
+    <select id="reg-comision" required>
+        <!-- NUEVA OPCIÓN DEFAULT -->
+        <option value="Asamblea General">Asamblea General (Afiliado Base)</option>
+        
+        <option value="Obras e Infraestructura">Obras e Infraestructura</option>
+        <option value="Salud y Medio Ambiente">Salud y Medio Ambiente</option>
+        <option value="Deportes y Cultura">Deportes y Cultura</option>
+        <option value="Seguridad y Convivencia">Seguridad y Convivencia</option>
+        <option value="Empresarial y Emprendimiento">Empresarial y Emprendimiento</option>
+    </select>
+</div>
+
+            <!-- BOTONES -->
+            <div class="form-actions">
+                <button type="button" id="btn-cancelar-registro" class="secondary-btn">Cancelar</button>
+                <button type="submit" class="form-submit">Finalizar Afiliación</button>
+            </div>
+
+        </form>
+    </div>
+</main>
     <!-- ========================================== -->
     <!-- MODAL UNIVERSAL DE REGISTRO                -->
     <!-- ========================================== -->

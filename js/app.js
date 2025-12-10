@@ -4,7 +4,7 @@
    ========================================================= */
 
 // 1. IMPORTACIONES
-import { loginUsuario, registrarUsuario, logout, monitorSesion } from "./auth.js";
+import { loginUsuario, logout, monitorSesion, registrarUsuarioCompleto  } from "./auth.js";
 import { doc, getDoc, collection, getDocs, addDoc, query, where, updateDoc, onSnapshot  } from "https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore.js";
 import { db } from "./firebase.js";
 
@@ -52,6 +52,9 @@ const boxRegister = document.getElementById('form-box-register');
 const btnIrRegistro = document.getElementById('btn-ir-registro');
 const btnVolverLogin = document.getElementById('btn-volver-login');
 const btnLogout = document.getElementById('btn-logout');
+const viewRegister = document.getElementById('view-register'); // La nueva vista
+const formRegisterFull = document.getElementById('form-register-full'); // El nuevo form
+const btnCancelarRegistro = document.getElementById('btn-cancelar-registro');
 
 
 // =========================================================
@@ -212,49 +215,109 @@ async function cargarInfoJAC(jacId) {
 }
 
 // --- B. CARGAR DIRECTIVA ---
+// --- B. CARGAR DIRECTIVA (ORGANIGRAMA 5 BLOQUES) ---
 async function cargarDirectiva(jacId) {
-    const tbody = document.getElementById('tabla-directiva-body');
-    if(!tbody) return;
-
-    tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px">Cargando equipo...</td></tr>';
+    console.log("Construyendo gobierno para:", jacId);
+    const gridContainer = document.getElementById('grid-gobierno');
+    
+    // Limpiamos y mostramos "Cargando"
+    gridContainer.innerHTML = '<div style="color:white; padding:20px;">Cargando estructura de gobierno...</div>';
 
     try {
         const directivaRef = collection(db, "jacs", jacId, "directiva");
         const snapshot = await getDocs(directivaRef);
         
-        tbody.innerHTML = ''; 
-
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="3" style="text-align:center">Sin miembros registrados.</td></tr>';
-            // Limpiar tarjetas si no hay datos
-            pintarTarjeta('card-presidente', {nombre: 'Vacante', cargo: 'Sin asignar'});
-            pintarTarjeta('card-vice', {nombre: 'Vacante', cargo: 'Sin asignar'});
+            gridContainer.innerHTML = '<div style="color:#aaa;">No hay directiva registrada.</div>';
             return;
         }
 
+        // 1. CLASIFICAR DATOS (Separar Directiva de Comités)
+        let dignatarios = []; // Presidente, Vice, etc.
+        let comites = [];     // Obras, Salud, etc.
+        let otros = [];
+
         snapshot.forEach(doc => {
             const data = doc.data();
-            
-            // Distribuir datos: Presidente, Vice o Tabla
-            if (data.cargo.toLowerCase().includes('presidente') && !data.cargo.toLowerCase().includes('vice')) {
-                pintarTarjeta('card-presidente', data);
-            } 
-            else if (data.cargo.toLowerCase().includes('vice')) {
-                pintarTarjeta('card-vice', data);
-            } 
-            else {
-                const fila = `<tr>
-                    <td style="display:flex; gap:10px; align-items:center;">
-                        <div class="avatar-circle" style="width:32px; height:32px; font-size:0.8rem;">${getIniciales(data.nombre)}</div>
-                        ${data.nombre}
-                    </td>
-                    <td>${data.cargo}</td>
-                    <td><span class="badge badge-active" style="color:#10b981; background:rgba(16,185,129,0.1); padding:4px 8px; border-radius:10px; font-size:0.7rem;">Activo</span></td>
-                </tr>`;
-                tbody.innerHTML += fila;
-            }
+            if (data.organo === 'directiva') dignatarios.push(data);
+            else if (data.organo === 'comites') comites.push(data);
+            else otros.push(data);
         });
-    } catch (error) { console.error(error); }
+
+        gridContainer.innerHTML = ''; // Limpiar loader
+
+        // -------------------------------------------------
+        // 2. PINTAR TARJETA 1: JUNTA DIRECTIVA (DIGNATARIOS)
+        // -------------------------------------------------
+        // Buscamos al Presidente para que sea la cara visible
+        const presidente = dignatarios.find(d => d.cargo.toLowerCase().includes('presidente')) || { nombre: 'Vacante', cargo: 'Presidente' };
+        const totalIntegrantes = dignatarios.length;
+
+        const htmlDirectiva = `
+            <article class="gov-card">
+                <div style="display:flex; justify-content:space-between; align-items:start;">
+                    <div class="gov-badge-top">JUNTA DIRECTIVA ACTUAL</div>
+                    <a href="#" style="color:var(--cyber-blue); font-size:0.8rem; text-decoration:none;">Ver perfil →</a>
+                </div>
+                
+                <h2 class="gov-role-title">${presidente.cargo}</h2>
+                
+                <div class="gov-profile">
+                    <div class="gov-avatar">${getIniciales(presidente.nombre)}</div>
+                    <div class="gov-info">
+                        <h3>${presidente.nombre}</h3>
+                        <p>Representación legal y articulación institucional.</p>
+                    </div>
+                </div>
+
+                <div class="gov-footer">
+                    <div class="gov-tags">
+                        <span class="gov-tag">Gobernanza</span>
+                        <span class="gov-tag">Planeación</span>
+                    </div>
+                    <span style="color:#aaa; font-size:0.85rem;">${totalIntegrantes} integrantes</span>
+                </div>
+            </article>
+        `;
+        gridContainer.innerHTML += htmlDirectiva;
+
+
+        // -------------------------------------------------
+        // 3. PINTAR TARJETAS 2...N: COMITÉS DE TRABAJO
+        // -------------------------------------------------
+        comites.forEach(comite => {
+            // El nombre del comité viene en 'nombre_comision' (estructura nueva)
+            // O en data.cargo si es estructura vieja.
+            const nombreComite = comite.nombre_comision || "Comité de Trabajo";
+            const htmlComite = `
+                <article class="gov-card">
+                    <div class="gov-badge-top" style="background:#232d36;">COMITÉ DE TRABAJO</div>
+                    
+                    <h2 class="gov-role-title" style="font-size:1.4rem; margin-bottom:10px;">${comite.nombre}</h2>
+                    <p style="color:#77c7ff; font-size:0.9rem; margin-bottom:20px;">${comite.cargo}</p>
+                    
+                    <div class="gov-info" style="margin-bottom:20px;">
+                        <p style="color:white; font-weight:600; margin-bottom:5px;">${nombreComite}</p>
+                        <p style="font-size:0.85rem;">Coordina y acompaña la ejecución de proyectos de esta área.</p>
+                    </div>
+
+                    <div class="gov-footer">
+                        <div class="gov-btn-group">
+                            <button class="gov-action-btn"><i class="ri-group-line"></i> Integrantes</button>
+                            <button class="gov-action-btn"><i class="ri-checkbox-circle-line"></i> Tareas</button>
+                            <button class="gov-action-btn"><i class="ri-file-list-2-line"></i> Actas</button>
+                        </div>
+                    </div>
+                </article>
+            `;
+            gridContainer.innerHTML += htmlComite;
+        });
+
+        // (Aquí luego agregaremos Fiscal y Convivencia debajo del grid)
+
+    } catch (error) {
+        console.error("Error cargando directiva:", error);
+    }
 }
 
 // --- C. CARGAR LIBROS (CON VISTA ESPECIAL PARA ACTAS) ---
@@ -263,6 +326,16 @@ async function cargarLibro(jacId, tipoLibro) {
     const subtituloEl = document.getElementById('libro-subtitulo');
     const thead = document.getElementById('libro-thead');
     const tbody = document.getElementById('libro-tbody');
+    const btnNuevo = document.getElementById('btn-nuevo-registro');
+
+    if (btnNuevo) {
+        // Verificamos si el usuario actual existe y es admin
+        if (currentUserData && currentUserData.rol.includes('admin')) {
+            btnNuevo.style.display = 'flex'; // Mostrar al Secretario
+        } else {
+            btnNuevo.style.display = 'none'; // Ocultar al Vecino
+        }
+    }
     
     // Limpiamos contenido previo
     tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Cargando...</td></tr>';
@@ -630,8 +703,9 @@ if(btnLogout) btnLogout.addEventListener('click', () => logout());
 // SWITCH LOGIN / REGISTRO
 if (btnIrRegistro) {
     btnIrRegistro.addEventListener('click', () => {
-        boxLogin.style.display = 'none';
-        boxRegister.style.display = 'block';
+        // Ocultar Login y mostrar Registro Full
+        viewAuth.classList.add('hidden-view'); // Ocultamos el login completo
+        viewRegister.classList.remove('hidden-view'); // Mostramos la nueva pantalla
         cargarListaDeJACs();
     });
 }
@@ -640,6 +714,80 @@ if (btnVolverLogin) {
         e.preventDefault();
         boxRegister.style.display = 'none';
         boxLogin.style.display = 'block';
+    });
+}
+// Botón Cancelar (Volver al login)
+if (btnCancelarRegistro) {
+    btnCancelarRegistro.addEventListener('click', () => {
+        viewRegister.classList.add('hidden-view');
+        viewAuth.classList.remove('hidden-view'); // Volver al login original
+    });
+}
+// NUEVO REGISTRO COMPLETO (CON UX MEJORADA)
+if (formRegisterFull) {
+    formRegisterFull.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        // A. EFECTO DE CARGA (UX)
+        const btnSubmit = formRegisterFull.querySelector('button[type="submit"]');
+        const textoOriginal = btnSubmit.textContent;
+        btnSubmit.disabled = true;
+        btnSubmit.textContent = "Procesando...";
+        btnSubmit.style.opacity = "0.7";
+
+        // B. RECOLECCIÓN DE DATOS
+        const datosUsuario = {
+            email: document.getElementById('reg-email').value,
+            pass: document.getElementById('reg-pass').value,
+            nombres: document.getElementById('reg-nombres').value,
+            apellidos: document.getElementById('reg-apellidos').value,
+            tipoDoc: document.getElementById('reg-tipo-doc').value,
+            numDoc: document.getElementById('reg-num-doc').value,
+            fechaNac: document.getElementById('reg-fecha-nac').value,
+            genero: document.getElementById('reg-genero').value,
+            jacId: document.getElementById('reg-jac').value,
+            direccion: document.getElementById('reg-direccion').value,
+            telefono: document.getElementById('reg-telefono').value,
+            comision: document.getElementById('reg-comision').value
+        };
+
+        if(!datosUsuario.jacId) { 
+            alert("Selecciona una comunidad"); 
+            resetBtn(); 
+            return; 
+        }
+
+        // C. ENVIAR A AUTH
+        const respuesta = await registrarUsuarioCompleto(datosUsuario);
+
+        // D. MANEJAR RESULTADO
+        if (respuesta.success) {
+            // ¡ÉXITO! Transición suave
+            console.log("Registro exitoso. Cambiando vista...");
+            
+            // 1. Ocultar Registro
+            viewRegister.classList.add('hidden-view');
+            
+            // 2. Mostrar Pantalla de Pendiente/Éxito DIRECTAMENTE
+            // (El monitorSesion también se disparará, pero nos adelantamos visualmente)
+            const viewPending = document.getElementById('view-pending');
+            if(viewPending) viewPending.classList.remove('hidden-view');
+            
+            // Limpiar formulario
+            formRegisterFull.reset();
+            resetBtn();
+
+        } else {
+            // ERROR
+            alert("Hubo un problema: " + respuesta.message);
+            resetBtn();
+        }
+
+        function resetBtn() {
+            btnSubmit.disabled = false;
+            btnSubmit.textContent = textoOriginal;
+            btnSubmit.style.opacity = "1";
+        }
     });
 }
 // --- EVENTOS BANDEJA ---

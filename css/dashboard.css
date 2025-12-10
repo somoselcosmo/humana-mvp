@@ -33,27 +33,19 @@ body { margin: 0; padding: 0; }
     background-color: var(--bg-dark);
     color: var(--text-main);
     font-family: 'Inter', sans-serif;
-    
     /* MARGENES DEL BORDE */
     margin: 3vh;
     width: calc(100% - 6vh);
-    
     /* CAMBIO CLAVE: Altura Mínima, pero crecimiento libre */
     min-height: calc(100vh - 6vh); 
     height: auto; /* Deja que crezca si hay mucho contenido */
-    
-    /* Bordes y Estilos */
     border: 1px solid var(--border-color);
-    border-radius: 12px;
+    border-radius: 16px;
     box-shadow: 0 0 10px rgba(0,0,0,0.5);
-    
     display: flex;
     flex-direction: column;
-    
-    /* IMPORTANTE: Quitamos el overflow hidden para permitir scroll del navegador */
-    overflow: visible; 
+     overflow: hidden; /* Mantiene todo dentro de las esquinas redondeadas */
 }
-
 /* =========================================
    HEADER (ESTILO NATIVO)
    ========================================= */
@@ -756,4 +748,146 @@ td {
 .tab-link.active {
     color: white;
     border-color: var(--cyber-blue);
+}
+/* =========================================
+   ESTILOS NUEVOS: TARJETAS GOBIERNO (GovTech)
+   ========================================= */
+
+.gov-grid {
+    display: grid;
+    /* Crea columnas automáticas de mínimo 450px */
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+    gap: 25px;
+    margin-bottom: 40px;
+}
+
+/* La Tarjeta Base */
+.gov-card {
+    background-color: #0b1217; /* Fondo muy oscuro */
+    border: 1px solid #1E262B;
+    border-radius: 20px;
+    padding: 30px;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    transition: transform 0.2s, border-color 0.2s;
+}
+
+.gov-card:hover {
+    transform: translateY(-3px);
+    border-color: var(--cyber-blue);
+}
+
+/* Badge Superior (Ej: "JUNTA DIRECTIVA ACTUAL") */
+.gov-badge-top {
+    background: #1c252b;
+    color: #94a3b8;
+    font-size: 0.7rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    padding: 6px 14px;
+    border-radius: 30px;
+    width: fit-content;
+    margin-bottom: 20px;
+}
+
+/* Título del Cargo (Ej: "Presidente") */
+.gov-role-title {
+    font-size: 1.6rem;
+    color: white;
+    font-weight: 600;
+    margin: 0 0 20px 0;
+    font-family: var(--fuente-heading);
+}
+
+/* Perfil (Avatar + Info) */
+.gov-profile {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 25px;
+}
+
+.gov-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 18px; /* Cuadrado redondeado como en tu foto */
+    background: linear-gradient(135deg, var(--turquesa30), var(--turquesa40));
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    font-weight: 800;
+    box-shadow: 0 10px 20px rgba(30, 165, 217, 0.3);
+}
+
+.gov-info h3 {
+    font-size: 1.2rem;
+    color: white;
+    margin: 0 0 5px 0;
+}
+
+.gov-info p {
+    font-size: 0.9rem;
+    color: #94a3b8; /* Gris azulado */
+    line-height: 1.4;
+    margin: 0;
+}
+
+/* Footer de la tarjeta (Botones / Stats) */
+.gov-footer {
+    margin-top: auto; /* Empuja hacia abajo */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    padding-top: 20px;
+}
+
+/* Botones de acción (Ver integrantes, Actas) */
+.gov-btn-group {
+    display: flex;
+    gap: 10px;
+}
+
+.gov-action-btn {
+    background: #161d22;
+    border: 1px solid #2A3640;
+    color: #e2e8f0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    cursor: pointer;
+    transition: 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.gov-action-btn:hover {
+    background: #1f2930;
+    color: white;
+    border-color: var(--text-muted);
+}
+
+/* Etiquetas pequeñas (Pills) */
+.gov-tags {
+    display: flex;
+    gap: 10px;
+}
+.gov-tag {
+    background: #161d22;
+    color: var(--turquesa40);
+    padding: 6px 12px;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+/* Responsive: Una columna en móvil */
+@media (max-width: 900px) {
+    .gov-grid { grid-template-columns: 1fr; }
 }

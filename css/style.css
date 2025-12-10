@@ -33,44 +33,41 @@ body { margin: 0; padding: 0; }
     background: var(--fondo10);
     color: var(--texto-claro10);
     display: flex;
-    overflow: hidden; /* Evita doble scroll en el body principal */
+    /* overflow-y: auto;  <-- Eliminado para dejar que el navegador gestione el scroll natural */
 }
 
 /* --- 1. MARCO PRINCIPAL (FLUIDO) --- */
 .login-frame {
     /* Ocupa casi toda la pantalla, dejando un margen */
-    width: 94vw;
-    height: 94vh;
-    margin: 3vh auto;
-    
+    min-height: calc(100vh - 6vh);
+    color: var(--text-main);
+    height: auto;
+    margin: 3vh;
+    width: calc(100% - 6vh);
     /* Flexbox para dividir izquierda/derecha */
     display: flex;
-    
     /* Estilos del borde */
     border: 1px solid var(--borde-fuerte);
     border-radius: 16px;
     background: var(--fondo10);
-    box-shadow: 0 0 30px rgba(0,0,0,0.6);
+    box-shadow: 0 0 16px rgba(0,0,0,0.6);
     overflow: hidden; /* Mantiene todo dentro de las esquinas redondeadas */
-    
     /* Límites para que no se rompa en extremos */
-    min-height: 500px;
     max-width: 1800px;
 }
 
 .login-shell {
     width: 100%;
-    height: 100%;
-    display: flex; /* Esto asegura que los hijos (hero y panel) llenen el alto */
+    /* height: 100%; <-- Eliminado para permitir crecimiento */
+    display: flex; 
 }
 
 /* --- 2. SECCIÓN IZQUIERDA (HERO) --- */
 .login-hero {
-    flex: 1.3; /* Ocupa un 55-60% del ancho */
-    height: 100%; /* Fuerza altura completa */
+    flex: 1.3;
     
-    /* Padding dinámico (se achica si la pantalla es pequeña) */
-    padding: clamp(30px, 5vh, 60px) clamp(30px, 4vw, 80px);
+
+    padding: clamp(2%, 5vh, 2%) clamp(4%, 4vw, 2%);
     
     display: flex;
     flex-direction: column;
@@ -245,6 +242,8 @@ body { margin: 0; padding: 0; }
 .panel-chip {
     align-self: flex-start;
     padding: 6px 14px;
+    border: 1px solid rgba(30, 165, 217, 0.2);
+    margin-bottom: 8px;
     border-radius: 20px;
     background: rgba(30, 165, 217, 0.12);
     color: var(--turquesa40);
@@ -365,4 +364,89 @@ select {
         border: none;
         padding: 0;
     }
+}
+/* =========================================
+   ESTILOS VISTA REGISTRO COMPLETO
+   ========================================= */
+
+.register-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 40px;
+    background: #0b0f13;
+    border: 1px solid var(--border-color);
+    border-radius: 20px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+}
+
+.register-header {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px solid var(--border-color);
+}
+
+/* Grilla del Formulario */
+.register-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.form-section-title {
+    color: var(--cyber-blue);
+    font-family: var(--font-heading);
+    font-size: 1rem;
+    font-weight: 700;
+    margin-top: 10px;
+    border-left: 3px solid var(--cyber-blue);
+    padding-left: 10px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-group label {
+    font-size: 0.85rem;
+    color: #e2e8f0;
+    font-weight: 500;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px;
+    background: #161d22;
+    border: 1px solid var(--border-suave);
+    border-radius: 8px;
+    color: white;
+    font-family: inherit;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: var(--turquesa);
+    outline: none;
+}
+
+.form-actions {
+    display: flex;
+    gap: 15px;
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-color);
+}
+
+@media (max-width: 700px) {
+    .register-container { margin: 0; border-radius: 0; border: none; min-height: 100vh; }
+    .form-row { grid-template-columns: 1fr; }
 }
