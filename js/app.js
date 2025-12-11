@@ -93,7 +93,7 @@ async function ingresarAlDashboard(usuario) {
         console.log("Acceso concedido:", usuario.rol);
         viewDashboard.classList.remove('hidden-view');
 
-        setText('user-email-display', usuario.email);
+        setText('user-email-display', usuario.nombres || usuario.email);
         setText('user-role-display', usuario.rol ? usuario.rol.toUpperCase() : "VECINO");
 
         if (usuario.jacId) {
@@ -214,214 +214,207 @@ async function cargarInfoJAC(jacId) {
     }
 }
 
-// --- B. CARGAR DIRECTIVA ---
-// --- B. CARGAR DIRECTIVA (ORGANIGRAMA 5 BLOQUES) ---
+// --- B. CARGAR DIRECTIVA (MODELO LEY 2166 DESDE USUARIOS) ---
 async function cargarDirectiva(jacId) {
-    console.log("Construyendo gobierno para:", jacId);
-    const gridContainer = document.getElementById('grid-gobierno');
+    console.log("Construyendo organigrama para:", jacId);
     
-    // Limpiamos y mostramos "Cargando"
-    gridContainer.innerHTML = '<div style="color:white; padding:20px;">Cargando estructura de gobierno...</div>';
+    // 1. Limpiar contenedores
+    const contenedores = {
+        'dignatarios': document.getElementById('lista-dignatarios'),
+        'fiscalia': document.getElementById('lista-fiscalia'),
+        'convivencia': document.getElementById('lista-convivencia'),
+        'comites': document.getElementById('lista-comites')
+    };
+
+    // Poner "Cargando..." en todos
+    Object.values(contenedores).forEach(div => div.innerHTML = '<div style="color:#aaa; font-size:0.9rem;">Cargando...</div>');
 
     try {
-        const directivaRef = collection(db, "jacs", jacId, "directiva");
-        const snapshot = await getDocs(directivaRef);
+        // 2. Traer usuarios de ESTA Jac que tengan un grupo asignado
+        const usuariosRef = collection(db, "usuarios");
+        // Filtro compuesto: Usuarios de esta JAC y que el campo 'grupo' no sea nulo
+        // Nota: Si esto falla por índices, usamos solo jacId y filtramos en JS (más fácil para MVP)
+        const q = query(usuariosRef, where("jacId", "==", jacId));
         
-        if (snapshot.empty) {
-            gridContainer.innerHTML = '<div style="color:#aaa;">No hay directiva registrada.</div>';
-            return;
-        }
+        const snapshot = await getDocs(q);
+        
+        // Limpiamos el texto de "Cargando..."
+        Object.values(contenedores).forEach(div => div.innerHTML = '');
 
-        // 1. CLASIFICAR DATOS (Separar Directiva de Comités)
-        let dignatarios = []; // Presidente, Vice, etc.
-        let comites = [];     // Obras, Salud, etc.
-        let otros = [];
+        let contadores = { dignatarios: 0, fiscalia: 0, convivencia: 0, comites: 0 };
 
         snapshot.forEach(doc => {
             const data = doc.data();
-            if (data.organo === 'directiva') dignatarios.push(data);
-            else if (data.organo === 'comites') comites.push(data);
-            else otros.push(data);
+            
+            // FILTRO JS: Solo procesamos si tiene un grupo válido
+            if (data.grupo && contenedores[data.grupo]) {
+                const tarjetaHTML = crearTarjetaDirectiva(data);
+                contenedores[data.grupo].insertAdjacentHTML('beforeend', tarjetaHTML);
+                contadores[data.grupo]++;
+            }
         });
 
-        gridContainer.innerHTML = ''; // Limpiar loader
-
-        // -------------------------------------------------
-        // 2. PINTAR TARJETA 1: JUNTA DIRECTIVA (DIGNATARIOS)
-        // -------------------------------------------------
-        // Buscamos al Presidente para que sea la cara visible
-        const presidente = dignatarios.find(d => d.cargo.toLowerCase().includes('presidente')) || { nombre: 'Vacante', cargo: 'Presidente' };
-        const totalIntegrantes = dignatarios.length;
-
-        const htmlDirectiva = `
-            <article class="gov-card">
-                <div style="display:flex; justify-content:space-between; align-items:start;">
-                    <div class="gov-badge-top">JUNTA DIRECTIVA ACTUAL</div>
-                    <a href="#" style="color:var(--cyber-blue); font-size:0.8rem; text-decoration:none;">Ver perfil →</a>
-                </div>
-                
-                <h2 class="gov-role-title">${presidente.cargo}</h2>
-                
-                <div class="gov-profile">
-                    <div class="gov-avatar">${getIniciales(presidente.nombre)}</div>
-                    <div class="gov-info">
-                        <h3>${presidente.nombre}</h3>
-                        <p>Representación legal y articulación institucional.</p>
-                    </div>
-                </div>
-
-                <div class="gov-footer">
-                    <div class="gov-tags">
-                        <span class="gov-tag">Gobernanza</span>
-                        <span class="gov-tag">Planeación</span>
-                    </div>
-                    <span style="color:#aaa; font-size:0.85rem;">${totalIntegrantes} integrantes</span>
-                </div>
-            </article>
-        `;
-        gridContainer.innerHTML += htmlDirectiva;
-
-
-        // -------------------------------------------------
-        // 3. PINTAR TARJETAS 2...N: COMITÉS DE TRABAJO
-        // -------------------------------------------------
-        comites.forEach(comite => {
-            // El nombre del comité viene en 'nombre_comision' (estructura nueva)
-            // O en data.cargo si es estructura vieja.
-            const nombreComite = comite.nombre_comision || "Comité de Trabajo";
-            const htmlComite = `
-                <article class="gov-card">
-                    <div class="gov-badge-top" style="background:#232d36;">COMITÉ DE TRABAJO</div>
-                    
-                    <h2 class="gov-role-title" style="font-size:1.4rem; margin-bottom:10px;">${comite.nombre}</h2>
-                    <p style="color:#77c7ff; font-size:0.9rem; margin-bottom:20px;">${comite.cargo}</p>
-                    
-                    <div class="gov-info" style="margin-bottom:20px;">
-                        <p style="color:white; font-weight:600; margin-bottom:5px;">${nombreComite}</p>
-                        <p style="font-size:0.85rem;">Coordina y acompaña la ejecución de proyectos de esta área.</p>
-                    </div>
-
-                    <div class="gov-footer">
-                        <div class="gov-btn-group">
-                            <button class="gov-action-btn"><i class="ri-group-line"></i> Integrantes</button>
-                            <button class="gov-action-btn"><i class="ri-checkbox-circle-line"></i> Tareas</button>
-                            <button class="gov-action-btn"><i class="ri-file-list-2-line"></i> Actas</button>
-                        </div>
-                    </div>
-                </article>
-            `;
-            gridContainer.innerHTML += htmlComite;
+        // Mensaje si alguna sección quedó vacía
+        Object.keys(contenedores).forEach(key => {
+            if (contadores[key] === 0) {
+                contenedores[key].innerHTML = `<div style="color:#555; font-style:italic; padding:10px; border:1px dashed #333; border-radius:10px;">Cargos vacantes</div>`;
+            }
         });
-
-        // (Aquí luego agregaremos Fiscal y Convivencia debajo del grid)
 
     } catch (error) {
         console.error("Error cargando directiva:", error);
     }
 }
 
-// --- C. CARGAR LIBROS (CON VISTA ESPECIAL PARA ACTAS) ---
+// --- FUNCIÓN AUXILIAR: GENERADOR DE HTML DE TARJETA ---
+function crearTarjetaDirectiva(usuario) {
+    const iniciales = getIniciales(usuario.nombre);
+    // Si tiene fotoUrl usamos imagen, si no, iniciales
+    const avatarHTML = usuario.fotoUrl 
+        ? `<img src="${usuario.fotoUrl}" style="width:100%; height:100%; object-fit:cover; border-radius:18px;">`
+        : iniciales;
+    
+    // Botón de WhatsApp (Si tiene teléfono)
+    let btnContacto = '';
+    if (usuario.telefono) {
+        // Limpiamos el número para el link (quitamos espacios o guiones)
+        const numeroLimpio = usuario.telefono.replace(/\D/g,''); 
+        btnContacto = `
+            <a href="https://wa.me/57${numeroLimpio}" target="_blank" class="gov-action-btn" style="text-decoration:none; justify-content:center; width:100%;">
+                <i class="ri-whatsapp-line" style="color:#25D366; font-size:1.1rem;"></i> Contactar
+            </a>
+        `;
+    }
+
+    // Retornamos el string HTML
+    return `
+        <article class="gov-card" style="padding: 20px;">
+            <div class="gov-profile" style="margin-bottom: 15px;">
+                <div class="gov-avatar">${avatarHTML}</div>
+                <div class="gov-info">
+                    <!-- Cargo destacado en azul -->
+                    <p style="color:var(--cyber-blue); font-size:0.75rem; text-transform:uppercase; letter-spacing:1px; font-weight:700; margin-bottom:4px;">
+                        ${usuario.cargo || 'Cargo indefinido'}
+                    </p>
+                    <h3 style="font-size:1.1rem;">${usuario.nombre}</h3>
+                </div>
+            </div>
+            
+            <div class="gov-footer" style="padding-top: 15px; margin-top: auto;">
+                ${btnContacto}
+            </div>
+        </article>
+    `;
+}
+
+
+// --- C. CARGAR LIBROS (COMPLETA Y CORREGIDA) ---
 async function cargarLibro(jacId, tipoLibro) {
     const tituloEl = document.getElementById('libro-titulo');
-    const subtituloEl = document.getElementById('libro-subtitulo');
+    // Intentamos buscar el subtítulo, si no existe no pasa nada
+    const subtituloEl = document.getElementById('libro-subtitulo'); 
     const thead = document.getElementById('libro-thead');
     const tbody = document.getElementById('libro-tbody');
-    const btnNuevo = document.getElementById('btn-nuevo-registro');
-
-    if (btnNuevo) {
-        // Verificamos si el usuario actual existe y es admin
-        if (currentUserData && currentUserData.rol.includes('admin')) {
-            btnNuevo.style.display = 'flex'; // Mostrar al Secretario
-        } else {
-            btnNuevo.style.display = 'none'; // Ocultar al Vecino
-        }
-    }
     
     // Limpiamos contenido previo
-    tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Cargando...</td></tr>';
+    if(tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">Cargando...</td></tr>';
 
     let coleccionNombre = "libro_" + tipoLibro;
     
-    // --- LÓGICA VISUAL SEGÚN EL LIBRO ---
-    
-    if (tipoLibro === 'actas') {
-        // 1. Configurar Títulos
-        tituloEl.textContent = "Actas · " + document.getElementById('jac-nombre').textContent;
-        subtituloEl.textContent = "Generación y control de documentos de asamblea.";
-        
-        // 2. INYECTAR EL HTML ESPECIAL DE ACTAS (Tarjetas)
-        // Usamos insertAdjacentHTML para ponerlo antes de la tabla
-        const headerActas = document.getElementById('header-actas-extra');
-        if(!headerActas) {
-            const htmlStats = `
-                <div id="header-actas-extra">
-                    <div class="stats-grid">
-                        <div class="stat-card">
-                            <span class="stat-label">Sesiones del Mes</span>
-                            <span class="stat-number">2</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Certificados Emitidos</span>
-                            <span class="stat-number">5</span>
-                            <span class="stat-sub">Incluye paz y salvos</span>
-                        </div>
-                        <div class="stat-card">
-                            <span class="stat-label">Estado de Actas</span>
-                            <span class="stat-number" style="color:#3b82f6; font-size:1.5rem;">Aprobada</span>
-                            <span class="acta-badge badge-blue" style="width:fit-content; margin-top:5px;">Actualizado hace 2 días</span>
-                        </div>
-                    </div>
-                    <div class="actas-toolbar">
-                        <div class="tabs-group">
-                            <span class="tab-link active">TODAS</span>
-                            <span class="tab-link">ORDINARIAS</span>
-                            <span class="tab-link">EXTRAORDINARIAS</span>
-                        </div>
-                        <!-- El botón de Nuevo Registro ya existe en el HTML base, lo reusamos -->
-                    </div>
-                </div>
-            `;
-            // Insertamos esto ANTES de la tabla
-            document.querySelector('.council-table').insertAdjacentHTML('beforebegin', htmlStats);
-        } else {
-            // Si ya existe, nos aseguramos que esté visible
-            headerActas.style.display = 'block';
-        }
+    // Ocultar header especial de actas si existe, por defecto
+    const headerActas = document.getElementById('header-actas-extra');
+    if(headerActas) headerActas.style.display = 'none';
 
-        // 3. Configurar Columnas de la Tabla
-        thead.innerHTML = `
-            <tr>
-                <th>NÚMERO</th>
-                <th>FECHA</th>
-                <th>TEMA</th>
-                <th>DECISIONES</th>
-                <th>ESTADO</th>
-                <th>ACCIONES</th>
-            </tr>`;
+    // =====================================================
+    // 1. CONFIGURACIÓN VISUAL (Títulos y Columnas)
+    // =====================================================
+    
+    if (tipoLibro === 'afiliados') {
+        setText(tituloEl, "Libro de Afiliados");
+        if(subtituloEl) subtituloEl.textContent = "Registro legal de socios (Ley 2166).";
+        thead.innerHTML = `<tr>
+            <th>Afiliado</th>
+            <th>Documento</th>
+            <th>Comisión</th>
+            <th>Estado</th>
+        </tr>`;
     } 
-    else {
-        // Si NO es actas, ocultamos el header especial si existe
-        const headerActas = document.getElementById('header-actas-extra');
-        if(headerActas) headerActas.style.display = 'none';
+    else if (tipoLibro === 'actas') {
+        setText(tituloEl, "Libro de Actas");
+        if(subtituloEl) subtituloEl.textContent = "Historial de asambleas y reuniones.";
         
-        // ... (Lógica para los otros libros, igual que antes) ...
-        if (tipoLibro === 'afiliados') {
-            tituloEl.textContent = "Libro de Afiliados";
-            thead.innerHTML = `<tr><th>Nombre</th><th>Documento</th><th>Dirección</th><th>Estado</th></tr>`;
-        }
-        // ... etc ...
+        // Mostrar tarjetas estadísticas
+        if(headerActas) headerActas.style.display = 'block';
+        
+        thead.innerHTML = `<tr>
+            <th>Número</th>
+            <th>Fecha</th>
+            <th>Tema</th>
+            <th>Decisiones</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>`;
+    }
+    else if (tipoLibro === 'contable') {
+        setText(tituloEl, "Libro de Tesorería");
+        if(subtituloEl) subtituloEl.textContent = "Control de ingresos, egresos y balances.";
+        thead.innerHTML = `<tr>
+            <th>Fecha</th>
+            <th>Concepto</th>
+            <th>Tipo Movimiento</th>
+            <th>Valor</th>
+            <th>Soporte</th>
+        </tr>`;
+    }
+    else if (tipoLibro === 'inventario') {
+        setText(tituloEl, "Inventario de Bienes");
+        if(subtituloEl) subtituloEl.textContent = "Control de muebles, inmuebles y equipos.";
+        thead.innerHTML = `<tr>
+            <th>Item / Bien</th>
+            <th>Cantidad</th>
+            <th>Ubicación</th>
+            <th>Estado</th>
+        </tr>`;
+    }
+    else if (tipoLibro === 'convivencia') {
+        setText(tituloEl, "Libro de Convivencia");
+        if(subtituloEl) subtituloEl.textContent = "Registro de conciliaciones y procesos.";
+        thead.innerHTML = `<tr>
+            <th>Fecha</th>
+            <th>Asunto</th>
+            <th>Implicados</th>
+            <th>Estado</th>
+        </tr>`;
     }
 
-    // --- TRAER DATOS DE FIREBASE ---
+    // --- LÓGICA DE BOTÓN NUEVO REGISTRO (PERMISOS) ---
+    const btnNuevo = document.getElementById('btn-nuevo-registro');
+    const permisosEscritura = {
+        'afiliados':   ['presidente', 'secretario', 'admin'],
+        'actas':       ['presidente', 'secretario', 'admin'],
+        'contable':    ['tesorero', 'admin'],
+        'inventario':  ['presidente', 'tesorero', 'admin'],
+        'convivencia': ['presidente', 'secretario', 'conciliador', 'admin']
+    };
+
+    if (btnNuevo) {
+        const miRol = currentUserData ? currentUserData.rol : 'vecino';
+        const rolesAutorizados = permisosEscritura[tipoLibro] || [];
+        btnNuevo.style.display = rolesAutorizados.includes(miRol) ? 'flex' : 'none';
+    }
+
+    // =====================================================
+    // 2. TRAER DATOS DE FIREBASE Y PINTAR TABLA
+    // =====================================================
     try {
         const librosRef = collection(db, "jacs", jacId, coleccionNombre);
         const snapshot = await getDocs(librosRef);
         
-        tbody.innerHTML = ''; 
+        if(tbody) tbody.innerHTML = ''; 
 
         if (snapshot.empty) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px;">No hay registros.</td></tr>';
-            return;
+            if(tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding:20px; color:#aaa;">No hay registros aún.</td></tr>';
+            return; // <--- ESTE ERA EL RETURN QUE DABA ERROR (Ahora está seguro dentro de la función)
         }
 
         snapshot.forEach(doc => {
@@ -429,33 +422,56 @@ async function cargarLibro(jacId, tipoLibro) {
             let fila = "";
 
             if (tipoLibro === 'actas') {
-                // LÓGICA DE BADGES (COLORES)
                 let badgeClass = 'badge-blue';
-                let estadoTexto = data.estado || 'Por aprobar';
-                
-                if (estadoTexto === 'Aprobada') badgeClass = 'badge-green';
-                if (estadoTexto === 'En revisión') badgeClass = 'badge-yellow';
+                if (data.estado === 'Aprobada') badgeClass = 'badge-green';
+                if (data.estado === 'En revisión') badgeClass = 'badge-yellow';
 
                 fila = `<tr>
                     <td style="font-family:monospace; color:white;">${data.numero || '---'}</td>
                     <td>${data.fecha}</td>
-                    <td style="color:white; font-weight:600;">${data.tema}</td>
-                    <td><i class="ri-check-line" style="color:#10b981"></i> ${data.decisiones || 'Sin resumen'}</td>
-                    <td><span class="acta-badge ${badgeClass}">${estadoTexto}</span></td>
+                    <td style="color:white; font-weight:600;">${data.tipo || data.tema}</td>
+                    <td>${data.decisiones || 'Sin resumen'}</td>
+                    <td><span class="acta-badge ${badgeClass}">${data.estado || 'N/A'}</span></td>
                     <td><button class="btn-editar">Ver</button></td>
                 </tr>`;
             }
-            // ... (Renderizado de los otros libros sigue igual) ...
             else if (tipoLibro === 'afiliados') {
-                 fila = `<tr><td><b style="color:white">${data.nombre}</b></td><td>${data.documento}</td><td>${data.direccion}</td><td>${data.estado}</td></tr>`;
+                 fila = `<tr>
+                    <td><b style="color:white">${data.nombre}</b><br><span style="font-size:0.8em; color:#aaa">${data.telefono || ''}</span></td>
+                    <td>${data.tipo_documento || ''} ${data.documento || ''}</td>
+                    <td>${data.comision_trabajo || 'Sin asignar'}</td>
+                    <td><span class="badge badge-active">Activo</span></td>
+                 </tr>`;
             }
-            // Agrega aquí contable, etc...
+            else if (tipoLibro === 'contable') {
+                const color = data.tipo === 'Ingreso' ? '#10b981' : '#f87171';
+                fila = `<tr>
+                    <td>${data.fecha}</td>
+                    <td>${data.concepto}</td>
+                    <td style="color:${color}; text-transform:uppercase; font-weight:bold;">${data.tipo}</td>
+                    <td style="color:white;">$${data.valor}</td>
+                    <td>${data.soporte || '-'}</td>
+                </tr>`;
+            }
+            else if (tipoLibro === 'inventario') {
+                fila = `<tr>
+                    <td style="color:white; font-weight:bold;">${data.item}</td>
+                    <td>${data.cantidad}</td>
+                    <td>${data.ubicacion}</td>
+                    <td>${data.estado_bien}</td>
+                </tr>`;
+            }
+            else {
+                // Genérico para otros libros
+                fila = `<tr><td colspan="4">${JSON.stringify(data)}</td></tr>`;
+            }
 
-            tbody.innerHTML += fila;
+            if(tbody) tbody.innerHTML += fila;
         });
 
     } catch (error) {
         console.error("Error cargando libro:", error);
+        if(tbody) tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:red;">Error de conexión.</td></tr>';
     }
 }
 
@@ -476,7 +492,7 @@ async function cargarListaDeJACs() {
 
 // --- E. CARGAR MENSAJES (CON NOMBRE EN LISTA) ---
 async function cargarMensajes(jacId) {
-    console.log("🔍 Buscando mensajes en la JAC:", jacId); // <--- AGREGA ESTO
+    console.log("🔍 Buscando mensajes en la JAC:", jacId);
     const contenedor = document.getElementById('lista-mensajes');
     if(!contenedor) return;
     
@@ -485,10 +501,15 @@ async function cargarMensajes(jacId) {
     try {
         const msgsRef = collection(db, "jacs", jacId, "mensajes");
         let q;
-
-        if (currentUserData.rol.includes('admin')) {
+        // DEFINIMOS QUIÉN ES "DIRECTIVA" (Quienes ven todo)
+        const rolesDirectiva = ['presidente', 'vicepresidente', 'tesorero', 'secretario', 'fiscal', 'admin'];
+        const miRol = currentUserData.rol;
+        // FILTRO DE PRIVACIDAD
+        if (rolesDirectiva.includes(miRol)) {
+            // Si soy directivo, veo TODO
             q = msgsRef; 
         } else {
+            // Si soy vecino o comité, solo veo lo MÍO
             q = query(msgsRef, where("remitente", "==", currentUserData.email));
         }
 
@@ -544,59 +565,69 @@ async function cargarMensajes(jacId) {
     }
 }
 
-// --- VER DETALLE ---
-// --- VER DETALLE (MEJORADO VISUALMENTE) ---
+// --- VER DETALLE (ACTUALIZADO CON ROLES DE DIRECTIVA) ---
 async function verMensajeCompleto(data, mensajeId, elementoHTML) {
-    // 1. Mostrar vista
+    // 1. Mostrar la vista de lectura
     vistaVacia.classList.add('hidden-view');
     vistaEscritura.classList.add('hidden-view');
     vistaLectura.classList.remove('hidden-view');
 
-    // 2. PREPARAR DATOS
-    // Intentamos obtener el nombre. Si no existe (mensajes viejos), usamos "Usuario"
+    // 2. Preparar datos visuales
     const nombreReal = data.remitenteNombre || "Usuario";
-    const emailReal = data.remitenteEmail || data.remitente; // Compatibilidad
+    const emailReal = data.remitenteEmail || data.remitente; 
     const iniciales = nombreReal.substring(0, 2).toUpperCase();
 
-    // 3. INYECTAR EN EL HTML (Nuevos IDs)
+    // 3. Inyectar datos en el HTML
     setText('msg-asunto', data.asunto);
     setText('msg-nombre-completo', nombreReal);
     setText('msg-email', emailReal);
     setText('msg-fecha', data.fecha);
-    setText('msg-avatar-container', iniciales); // Ponemos las iniciales en la bolita
-    
+    setText('msg-avatar-container', iniciales);
     document.getElementById('msg-cuerpo').innerText = data.cuerpo;
 
-    // ... (El resto de la lógica de respuesta y marcar como leído sigue IGUAL) ...
-    // COPIA AQUÍ LO QUE YA TENÍAS DEBAJO PARA GESTIONAR RESPUESTAS Y LEÍDOS
-    // (Desde 'const boxVisual...' hacia abajo)
-    
+    // --- AQUÍ ESTÁ EL CAMBIO CLAVE ---
+    // Definimos quiénes tienen permiso de responder y marcar visto
+    const rolesDirectiva = ['presidente', 'vicepresidente', 'tesorero', 'secretario', 'fiscal', 'admin'];
+    const miRol = currentUserData.rol; // El rol de quien está logueado
+
+    // 4. Gestión de Respuesta
     const boxVisual = document.getElementById('visualizar-respuesta');
     const boxForm = document.getElementById('formulario-respuesta');
     
+    // Limpiamos estados
     boxVisual.classList.add('hidden-view');
     boxForm.classList.add('hidden-view');
 
+    // Guardamos el ID en el botón por si vamos a responder
     const btnResponder = document.getElementById('btn-enviar-respuesta');
     if(btnResponder) btnResponder.dataset.msgId = mensajeId; 
 
+    // Lógica visual
     if (data.respuesta) {
+        // A. Si YA tiene respuesta, cualquiera la puede ver
         boxVisual.classList.remove('hidden-view');
         setText('resp-texto', data.respuesta);
         setText('resp-fecha', data.fechaRespuesta || "");
     } 
-    else if (currentUserData.rol.includes('admin')) {
+    else if (rolesDirectiva.includes(miRol)) { 
+        // B. Si NO tiene respuesta Y soy Directivo -> Muestro formulario
+        // (Antes aquí decía: if currentUserData.rol === 'admin')
         boxForm.classList.remove('hidden-view');
         document.getElementById('txt-respuesta-admin').value = ""; 
     }
 
-    if (currentUserData.rol.includes('admin') && data.estado === 'no_leido') {
+    // 5. Marcar como Leído (Solo si soy Directivo y es nuevo)
+    if (rolesDirectiva.includes(miRol) && data.estado === 'no_leido') {
         try {
             const msgRef = doc(db, "jacs", currentJacId, "mensajes", mensajeId);
             await updateDoc(msgRef, { estado: 'leido' });
-            elementoHTML.classList.remove('unread');
-            elementoHTML.classList.add('read');
-            data.estado = 'leido'; 
+            
+            // Actualizar visualmente la lista izquierda
+            if(elementoHTML) {
+                elementoHTML.classList.remove('unread');
+                elementoHTML.classList.add('read');
+            }
+            data.estado = 'leido'; // Actualizar dato en memoria
         } catch (e) { console.error(e); }
     }
 }

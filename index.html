@@ -336,27 +336,36 @@
     <!-- VISTA B: DIRECTIVA (Oculta por defecto)    -->
     <!-- ========================================== -->
     <div id="section-directiva" class="hidden-view">
-        
 
-<header class="council-header">
-    <div>
-        <h1 id="dir-titulo">Gobierno JAC</h1>
-        <p class="council-header__subtitle">Directiva, comités de trabajo y delegados</p>
-    </div>
-    <div style="text-align:right;">
-        <span style="color:#aaa; font-size:0.8rem; display:block;">VIGENCIA</span>
-        <span style="color:white; font-family:monospace; background:#1e262b; padding:5px 10px; border-radius:8px; border:1px solid #333;">2024 - 2028</span>
-    </div>
-</header>
+        <header class="council-header">
+            <div>
+                <h1 id="dir-titulo">Gobierno JAC</h1>
+                <p class="council-header__subtitle">Organigrama oficial según Ley 2166 de 2021</p>
+            </div>
+            <div style="text-align:right;">
+                <span style="color:#aaa; font-size:0.8rem; display:block;">PERIODO</span>
+                <span class="badge badge-active" style="background:#1e262b; border-color:#333;">2024 - 2028</span>
+            </div>
+        </header>
 
-<!-- AQUÍ SE PINTARÁN LAS TARJETAS AUTOMÁTICAMENTE -->
-<div id="grid-gobierno" class="gov-grid">
-    <!-- El JS llenará esto -->
-</div>
+        <!-- BLOQUE 1: DIGNATARIOS (La Plana Mayor) -->
+        <h3 class="aside-section-title" style="margin-top:0;">Dignatarios</h3>
+        <div id="lista-dignatarios" class="gov-grid">
+            <!-- JS inyectará aquí -->
+        </div>
 
-<!-- MÁS ABAJO IRÁN LOS OTROS BLOQUES (FISCAL, CONVIVENCIA) LUEGO -->
-    
-        
+        <!-- BLOQUE 2: FISCALÍA (Órgano de Control) -->
+        <!-- Este suele ser uno solo, así que centramos o ajustamos visualmente -->
+        <h3 class="aside-section-title">Órgano de Control</h3>
+        <div id="lista-fiscalia" class="gov-grid"></div>
+
+        <!-- BLOQUE 3: COMISIÓN DE CONVIVENCIA -->
+        <h3 class="aside-section-title">Comisión de Convivencia y Conciliación</h3>
+        <div id="lista-convivencia" class="gov-grid"></div>
+
+        <!-- BLOQUE 4: SECRETARÍAS EJECUTIVAS (COMITÉS) -->
+        <h3 class="aside-section-title">Secretarías Ejecutivas (Comités de Trabajo)</h3>
+        <div id="lista-comites" class="gov-grid"></div>
     
     </div> <!-- FIN DE SECTION DIRECTIVA -->
     <!-- VISTA C: VISOR DE LIBROS (Genérico) -->
