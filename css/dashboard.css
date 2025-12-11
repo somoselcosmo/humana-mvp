@@ -891,3 +891,157 @@ td {
 @media (max-width: 900px) {
     .gov-grid { grid-template-columns: 1fr; }
 }
+/* ESTILOS MODAL ACTAS */
+.acta-section {
+    margin-bottom: 30px;
+    padding-bottom: 20px;
+    border-bottom: 1px dashed var(--border-color);
+}
+
+.section-title {
+    font-family: 'Montserrat', sans-serif;
+    font-size: 1.1rem;
+    color: white;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.step-badge {
+    background: var(--cyber-blue);
+    color: #0b0f13;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.9rem;
+}
+
+.input-orden {
+    width: 100%;
+    background: #161d22;
+    border: 1px solid var(--border-color);
+    padding: 10px;
+    border-radius: 8px;
+    color: white;
+    margin-bottom: 8px;
+}
+/* ESTILOS VISOR DE ACTAS */
+.visor-block {
+    margin-bottom: 25px;
+}
+
+.visor-title {
+    color: var(--cyber-blue);
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 1px dashed #333;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+}
+
+.acuerdo-item {
+    background: rgba(255,255,255,0.03);
+    padding: 10px;
+    border-radius: 6px;
+    border-left: 3px solid var(--turquesa);
+}
+/* =========================================
+   VISOR DE ACTAS (HOJA DIGITAL PRO)
+   ========================================= */
+
+.acta-sheet {
+    background-color: #11161a;
+    width: 100%;
+    max-width: 700px; /* Ancho carta aprox */
+    min-height: auto; 
+    height: fit-content; /* Altura ajustada al contenido */
+    padding: 50px;
+    box-shadow: 0 0 50px rgba(0,0,0,0.5);
+    border: 1px solid #1E262B;
+    position: relative;
+}
+
+/* Efecto decorativo borde superior */
+.acta-sheet::before {
+    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px;
+    background: linear-gradient(90deg, var(--cyber-blue), var(--morado));
+}
+
+/* Header */
+.sheet-header {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    margin-bottom: 30px;
+}
+.sheet-title { font-size: 2rem; font-weight: 800; color: white; margin: 0; line-height: 1; }
+.sheet-subtitle { font-size: 1rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 2px; margin-top: 5px; }
+
+.meta-box { text-align: right; margin-bottom: 10px; }
+.meta-label { display: block; font-size: 0.65rem; color: #555; font-weight: 700; letter-spacing: 1px; }
+.meta-value { font-size: 1.1rem; font-weight: 700; color: white; font-family: monospace; }
+
+/* Grid de Datos Técnicos */
+.sheet-info-grid {
+    display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    background: rgba(255,255,255,0.02); padding: 20px; border-radius: 8px; border: 1px solid #1E262B;
+}
+.info-label { font-size: 0.7rem; color: var(--cyber-blue); font-weight: 700; display: block; margin-bottom: 4px; }
+.sheet-info-grid p { margin: 0; color: #e2e8f0; font-size: 0.9rem; }
+
+.sheet-divider { border: 0; border-top: 1px dashed #333; margin: 30px 0; }
+
+/* Secciones */
+.section-heading {
+    font-size: 1rem; color: white; border-bottom: 2px solid #1E262B;
+    padding-bottom: 10px; margin-bottom: 20px; margin-top: 30px;
+    display: flex; align-items: center; gap: 10px;
+}
+.section-heading i { color: var(--turquesa); }
+
+/* Quorum Box */
+.quorum-box {
+    display: flex; align-items: center; gap: 30px;
+    background: #0d1317; padding: 15px 20px; border-radius: 8px; border: 1px solid #1E262B;
+}
+.quorum-stat { display: flex; flex-direction: column; }
+.quorum-stat span { font-size: 0.75rem; color: #777; }
+.quorum-stat strong { font-size: 1.2rem; color: white; }
+.quorum-result { margin-left: auto; font-weight: bold; color: var(--verde-exito); }
+
+/* Listas y Texto */
+.sheet-list { padding-left: 20px; color: #cbd5e1; line-height: 1.6; }
+.sheet-list li { margin-bottom: 8px; }
+.text-justified { color: #cbd5e1; line-height: 1.8; text-align: justify; white-space: pre-wrap; }
+
+/* Tarjetas de Acuerdos */
+.acuerdos-grid { display: grid; gap: 15px; }
+.acuerdo-card {
+    background: rgba(30, 165, 217, 0.05); border-left: 4px solid var(--turquesa);
+    padding: 15px; border-radius: 0 8px 8px 0;
+}
+.acuerdo-desc { color: white; font-weight: 600; display: block; margin-bottom: 5px; }
+.acuerdo-meta { font-size: 0.8rem; color: #94a3b8; }
+
+/* Firmas */
+.firmas-grid {
+    display: flex; justify-content: space-between; margin-top: 80px;
+}
+.firma-box { width: 40%; text-align: center; }
+.firma-line { border-top: 1px solid #555; margin-bottom: 10px; }
+.firma-box strong { display: block; color: white; font-size: 0.9rem; }
+.firma-box span { color: #777; font-size: 0.8rem; }
+
+.sheet-footer-text { margin-top: 40px; text-align: center; font-style: italic; color: #555; font-size: 0.85rem; }
+
+/* Responsive */
+@media (max-width: 700px) {
+    .acta-sheet { padding: 25px; }
+    .sheet-title { font-size: 1.5rem; }
+    .firmas-grid { flex-direction: column; gap: 40px; }
+    .firma-box { width: 100%; }
+}

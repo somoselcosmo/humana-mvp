@@ -424,16 +424,23 @@ async function cargarLibro(jacId, tipoLibro) {
             if (tipoLibro === 'actas') {
                 let badgeClass = 'badge-blue';
                 if (data.estado === 'Aprobada') badgeClass = 'badge-green';
-                if (data.estado === 'En revisión') badgeClass = 'badge-yellow';
-
-                fila = `<tr>
+                // TRUCO: Creamos el TR como elemento DOM, no como texto string
+                // Esto nos permite agregar el evento onclick con el objeto 'data' completo
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
                     <td style="font-family:monospace; color:white;">${data.numero || '---'}</td>
                     <td>${data.fecha}</td>
-                    <td style="color:white; font-weight:600;">${data.tipo || data.tema}</td>
-                    <td>${data.decisiones || 'Sin resumen'}</td>
-                    <td><span class="acta-badge ${badgeClass}">${data.estado || 'N/A'}</span></td>
-                    <td><button class="btn-editar">Ver</button></td>
-                </tr>`;
+                    <td style="color:white; font-weight:600;">${data.tipo}</td>
+                    <td>${data.decisiones ? data.decisiones.substring(0,30)+'...' : '-'}</td>
+                    <td><span class="acta-badge ${badgeClass}">${data.estado}</span></td>
+                    <td><button class="btn-editar btn-ver-acta">Ver</button></td>
+                `;
+                 // Agregamos el evento al botón que acabamos de crear
+                tr.querySelector('.btn-ver-acta').addEventListener('click', () => abrirVisorActa(data));
+                
+                tbody.appendChild(tr);
+                return;
+                
             }
             else if (tipoLibro === 'afiliados') {
                  fila = `<tr>
@@ -948,15 +955,16 @@ const contenedorCampos = document.getElementById('modal-campos-container');
 // A. ABRIR MODAL
 if (btnNuevoRegistro) {
     btnNuevoRegistro.addEventListener('click', () => {
-        // Obtenemos el libro actual del título (Truco rápido)
-        // Ejemplo: "Libro de Afiliados" -> sacamos "afiliados"
-        // O mejor, usamos una variable global.
-        // Haremos un "hack" buscando qué menú está activo en Libros
         const menuActivo = document.querySelector('#submenu-libros .menu-item.active');
         if (!menuActivo) return alert("Selecciona un libro primero.");
         
-        const tipoLibro = menuActivo.dataset.target.split('-')[1]; // 'afiliados'
+        const tipoLibro = menuActivo.dataset.target.split('-')[1]; 
         libroActualParaGuardar = tipoLibro;
+        // --- SI ES ACTAS, ABRIMOS EL MODAL ESPECIAL ---
+        if (tipoLibro === 'actas') {
+            abrirModalActas(); // <--- Llamamos a la nueva función
+            return;
+        }
 
         const campos = configLibros[tipoLibro];
         if (!campos) return alert("Formulario no configurado para este libro.");
@@ -1031,6 +1039,223 @@ if (formModal) {
         } catch (error) {
             console.error(error);
             alert("Error al guardar.");
+        }
+    });
+}
+// =========================================================
+// 10. LÓGICA ESPECÍFICA PARA ACTAS
+// =========================================================
+
+const modalActa = document.getElementById('modal-acta');
+const btnCerrarActa = document.getElementById('btn-cerrar-acta');
+const btnCancelarActa = document.getElementById('btn-cancelar-acta');
+const btnGuardarActa = document.getElementById('btn-guardar-acta');
+
+// --- FUNCIÓN CORREGIDA: FILTRAR POR ROL EXACTO ---
+async function abrirModalActas() {
+    const modalActa = document.getElementById('modal-acta');
+    modalActa.classList.remove('hidden-view');
+    
+    // 1. Generar UUID
+    document.getElementById('acta-uuid').value = crypto.randomUUID();
+    
+    // 2. Referencias
+    const selPresi = document.getElementById('acta-presidente');
+    const selSecre = document.getElementById('acta-secretario');
+    
+    selPresi.innerHTML = '<option>Buscando presidente...</option>';
+    selSecre.innerHTML = '<option>Buscando secretario...</option>';
+    
+    try {
+        const usuariosRef = collection(db, "usuarios");
+        
+        // 3. CONSULTA PRECISA POR ROL
+        // Buscamos usuarios de esta JAC que tengan rol 'presidente' O 'secretario'
+        const q = query(
+            usuariosRef, 
+            where("jacId", "==", currentJacId),
+            where("rol", "in", ["presidente", "secretario"]) 
+        );
+        
+        const snapshot = await getDocs(q);
+        
+        // 4. Limpieza inicial
+        const defaultOption = '<option value="" disabled selected>Seleccione...</option>';
+        selPresi.innerHTML = defaultOption;
+        selSecre.innerHTML = defaultOption;
+
+        if (snapshot.empty) {
+            // Si no hay nadie con esos roles
+            const opVacia = '<option value="Manual">No asignado (Ingresar manual)</option>';
+            selPresi.innerHTML += opVacia;
+            selSecre.innerHTML += opVacia;
+            return;
+        }
+
+        // 5. CLASIFICACIÓN EXACTA
+        let hayPresidente = false;
+        let haySecretario = false;
+
+        snapshot.forEach(doc => {
+            const d = doc.data();
+            // El valor a guardar será el Nombre (Texto) para mantener el histórico
+            const textoOpcion = d.nombre; 
+            const htmlOpcion = `<option value="${d.nombre}">${textoOpcion}</option>`;
+            
+            // Repartimos según el rol
+            if (d.rol === 'presidente') {
+                selPresi.innerHTML += htmlOpcion;
+                hayPresidente = true;
+            } 
+            else if (d.rol === 'secretario') {
+                selSecre.innerHTML += htmlOpcion;
+                haySecretario = true;
+            }
+        });
+
+        // Si falta alguno, damos opción manual
+        if (!hayPresidente) selPresi.innerHTML += '<option value="Ad-Hoc">Presidente Ad-Hoc (Manual)</option>';
+        if (!haySecretario) selSecre.innerHTML += '<option value="Ad-Hoc">Secretario Ad-Hoc (Manual)</option>';
+
+    } catch (error) {
+        console.error("Error cargando roles:", error);
+        selPresi.innerHTML = '<option>Error</option>';
+        selSecre.innerHTML = '<option>Error</option>';
+    }
+} 
+// --- FUNCIÓN PARA VER EL ACTA (VISOR PRO 2.0) ---
+function abrirVisorActa(data) {
+    const modalVisor = document.getElementById('modal-visor-acta');
+    modalVisor.classList.remove('hidden-view');
+
+    // 1. Cabecera y Metadatos
+    setText('visor-numero', data.numero);
+    setText('visor-tipo', (data.tipo || "REUNIÓN").toUpperCase());
+    
+    // Badge de estado con color
+    const estadoEl = document.getElementById('visor-estado-badge');
+    estadoEl.textContent = data.estado;
+    estadoEl.className = 'meta-value'; // Reset
+    if (data.estado === 'Aprobada') estadoEl.style.color = '#10b981';
+    else if (data.estado === 'En revisión') estadoEl.style.color = '#f59e0b';
+    else estadoEl.style.color = '#fff';
+
+    setText('visor-fecha-hora', `${data.fecha} • ${data.hora_inicio} a ${data.hora_fin}`);
+    setText('visor-lugar', data.lugar);
+    setText('visor-uuid', data.uuid);
+
+    // 2. Quórum
+    setText('visor-habiles', data.quorum?.habiles || 0);
+    setText('visor-asistentes', data.quorum?.asistentes || 0);
+    setText('visor-quorum-res', data.quorum?.resultado || '---');
+
+    // 3. Orden del Día
+    const listaOrden = document.getElementById('visor-orden');
+    listaOrden.innerHTML = '';
+    if (data.orden_dia && data.orden_dia.length > 0) {
+        data.orden_dia.forEach(item => {
+            listaOrden.innerHTML += `<li>${item}</li>`;
+        });
+    } else {
+        listaOrden.innerHTML = '<li>Sin orden del día registrado.</li>';
+    }
+
+    // 4. Desarrollo
+    setText('visor-desarrollo', data.desarrollo || "Sin descripción del desarrollo.");
+
+    // 5. Acuerdos (Tarjetas Bonitas)
+    const containerAcuerdos = document.getElementById('visor-acuerdos-container');
+    containerAcuerdos.innerHTML = '';
+    if (data.acuerdos && data.acuerdos.length > 0) {
+        data.acuerdos.forEach(ac => {
+            containerAcuerdos.innerHTML += `
+                <div class="acuerdo-card">
+                    <span class="acuerdo-desc">${ac.desc}</span>
+                    <div class="acuerdo-meta">
+                        <i class="ri-user-star-line"></i> Resp: ${ac.resp} &nbsp;|&nbsp; 
+                        <i class="ri-calendar-event-line"></i> Plazo: ${ac.plazo}
+                    </div>
+                </div>
+            `;
+        });
+    } else {
+        containerAcuerdos.innerHTML = '<div style="color:#555; font-style:italic;">No se registraron acuerdos.</div>';
+    }
+
+    // 6. Firmas
+    setText('visor-firma-presi', (data.firmas?.presidente || '---').toUpperCase());
+    setText('visor-firma-secre', (data.firmas?.secretario || '---').toUpperCase());
+    setText('visor-cierre', `"${data.cierre_msg || ''}"`);
+
+    // Evento cerrar
+    document.getElementById('btn-cerrar-visor').onclick = () => {
+        modalVisor.classList.add('hidden-view');
+    };
+}
+
+// CERRAR
+if(btnCerrarActa) btnCerrarActa.addEventListener('click', () => modalActa.classList.add('hidden-view'));
+if(btnCancelarActa) btnCancelarActa.addEventListener('click', () => modalActa.classList.add('hidden-view'));
+
+// GUARDAR ACTA COMPLEJA
+if (btnGuardarActa) {
+    btnGuardarActa.addEventListener('click', async () => {
+        
+        // Recolectar Orden del Día (Array)
+        const ordenInputs = document.querySelectorAll('.input-orden');
+        let ordenDia = [];
+        ordenInputs.forEach(inp => { if(inp.value) ordenDia.push(inp.value) });
+
+        // Recolectar Acuerdos (Array de Objetos)
+        let acuerdos = [];
+        if(document.getElementById('acuerdo-1-desc').value) {
+            acuerdos.push({
+                desc: document.getElementById('acuerdo-1-desc').value,
+                resp: document.getElementById('acuerdo-1-resp').value,
+                plazo: document.getElementById('acuerdo-1-plazo').value
+            });
+        }
+        // (Podrías hacer lo mismo para el acuerdo 2)
+
+        const nuevaActa = {
+            numero: document.getElementById('acta-num').value,
+            tipo: document.getElementById('acta-tipo').value,
+            lugar: document.getElementById('acta-lugar').value,
+            uuid: document.getElementById('acta-uuid').value,
+            fecha: document.getElementById('acta-fecha').value,
+            hora_inicio: document.getElementById('acta-inicio').value,
+            hora_fin: document.getElementById('acta-fin').value,
+            convocatoria: document.getElementById('acta-convocatoria').value,
+            
+            quorum: {
+                habiles: document.getElementById('acta-habiles').value,
+                asistentes: document.getElementById('acta-asistentes').value,
+                resultado: document.getElementById('acta-quorum-res').value
+            },
+            
+            orden_dia: ordenDia,
+            desarrollo: document.getElementById('acta-desarrollo').value,
+            acuerdos: acuerdos, // Array complejo
+            
+            cierre_msg: document.getElementById('acta-cierre-texto').value,
+            firmas: {
+                presidente: document.getElementById('acta-presidente').value,
+                secretario: document.getElementById('acta-secretario').value
+            },
+            
+            estado: "Aprobada", // Por defecto para el MVP
+            timestamp: Date.now()
+        };
+
+        // Guardar
+        try {
+            await addDoc(collection(db, "jacs", currentJacId, "libro_actas"), nuevaActa);
+            alert("Acta guardada correctamente.");
+            modalActa.classList.add('hidden-view');
+            cargarLibro(currentJacId, 'actas'); // Recargar tabla
+        } catch (e) {
+            console.error(e);
+            alert("Error al guardar acta.");
         }
     });
 }

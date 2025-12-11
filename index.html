@@ -652,6 +652,274 @@
             </form>
         </div>
     </div>
+    <!-- ========================================== -->
+<!-- MODAL ESPECIAL: NUEVA ACTA (DETALLADO)     -->
+<!-- ========================================== -->
+<div id="modal-acta" class="modal-overlay hidden-view">
+    <div class="modal-content" style="max-width: 900px; height: 90vh; display: flex; flex-direction: column; padding: 0;">
+        
+        <!-- Header Fijo -->
+        <header class="modal-header" style="padding: 20px 30px; background: #0b0f13; margin: 0;">
+            <div>
+                <h2 style="margin:0; font-size: 1.2rem;">Nueva Acta de Sesión</h2>
+                <p style="color:var(--text-muted); font-size:0.8rem; margin:0;">Diligencia la información oficial de la asamblea.</p>
+            </div>
+            <button id="btn-cerrar-acta" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </header>
+
+        <!-- Cuerpo Scrollable -->
+        <div style="flex: 1; overflow-y: auto; padding: 30px;">
+            <form id="form-acta-completa">
+                
+                <!-- 1. DATOS GENERALES -->
+                <div class="acta-section">
+                    <div class="section-title"><span class="step-badge">1</span> Datos Generales</div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Acta Nº</label>
+                            <input type="text" id="acta-num" placeholder="Ej: ACT-0045" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Tipo de Reunión</label>
+                            <select id="acta-tipo">
+                                <option>Ordinaria</option>
+                                <option>Extraordinaria</option>
+                                <option>Informativa</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Lugar</label>
+                            <input type="text" id="acta-lugar"  placeholder="Ej: Salón Comunal" required>
+                        </div>
+                        <div class="form-group">
+                            <label>Código UUID</label>
+                            <input type="text" id="acta-uuid" readonly style="opacity: 0.5; cursor: not-allowed;">
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group"><label>Fecha</label><input type="date" id="acta-fecha" required></div>
+                        <div class="form-group"><label>Hora Inicio</label><input type="time" id="acta-inicio" required></div>
+                        <div class="form-group"><label>Hora Cierre</label><input type="time" id="acta-fin" required></div>
+                        <div class="form-group"><label>Convocatoria</label><input type="text" id="acta-convocatoria" placeholder="Ej: Circular 001"></div>
+                    </div>
+                </div>
+
+                <!-- 2. QUÓRUM -->
+                <div class="acta-section">
+                    <div class="section-title"><span class="step-badge">2</span> Verificación del Quórum</div>
+                    <div class="form-row" style="grid-template-columns: 1fr 1fr 2fr;">
+                        <div class="form-group"><label>Total Hábiles</label><input type="number" id="acta-habiles"></div>
+                        <div class="form-group"><label>Asistentes</label><input type="number" id="acta-asistentes"></div>
+                        <div class="form-group">
+                            <label>Resultado</label>
+                            <select id="acta-quorum-res">
+                                <option value="Válido">Quórum Válido</option>
+                                <option value="Insuficiente">Insuficiente (Se levanta sesión)</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. ORDEN DEL DÍA -->
+                <div class="acta-section">
+                    <div class="section-title"><span class="step-badge">3</span> Orden del día</div>
+                    <div class="form-group" style="gap: 10px;">
+                        <input type="text" class="input-orden" placeholder="1. Verificación del quórum">
+                        <input type="text" class="input-orden" placeholder="2. Lectura acta anterior">
+                        <input type="text" class="input-orden" placeholder="3. ...">
+                        <input type="text" class="input-orden" placeholder="4. ...">
+                    </div>
+                </div>
+
+                <!-- 4. DESARROLLO -->
+                <div class="acta-section">
+                    <div class="section-title"><span class="step-badge">4</span> Desarrollo de la sesión</div>
+                    <textarea id="acta-desarrollo" rows="6" class="inbox-input" placeholder="Resumen de intervenciones y avances..."></textarea>
+                </div>
+
+                <!-- 5. ACUERDOS -->
+                <div class="acta-section">
+                    <div class="section-title"><span class="step-badge">5</span> Decisiones y Acuerdos</div>
+                    
+                    <!-- Acuerdo 1 -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px; margin-bottom: 10px;">
+                        <h4 style="margin:0 0 10px 0; color:var(--cyber-blue); font-size:0.8rem;">ACUERDO 1</h4>
+                        <div class="form-group"><input type="text" id="acuerdo-1-desc" placeholder="Descripción del acuerdo"></div>
+                        <div class="form-row" style="margin-top:10px;">
+                            <div class="form-group"><input type="text" id="acuerdo-1-resp" placeholder="Responsable"></div>
+                            <div class="form-group"><input type="date" id="acuerdo-1-plazo"></div>
+                        </div>
+                    </div>
+
+                    <!-- Acuerdo 2 -->
+                    <div style="background: rgba(255,255,255,0.03); padding: 15px; border-radius: 10px;">
+                        <h4 style="margin:0 0 10px 0; color:var(--cyber-blue); font-size:0.8rem;">ACUERDO 2 (Opcional)</h4>
+                        <div class="form-group"><input type="text" id="acuerdo-2-desc" placeholder="Descripción del acuerdo"></div>
+                        <div class="form-row" style="margin-top:10px;">
+                            <div class="form-group"><input type="text" id="acuerdo-2-resp" placeholder="Responsable"></div>
+                            <div class="form-group"><input type="date" id="acuerdo-2-plazo"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 6. CIERRE Y FIRMAS -->
+                <div class="acta-section">
+                    <div class="section-title"><span class="step-badge">6</span> Cierre y Firmas</div>
+                    <div class="form-group">
+                        <textarea id="acta-cierre-texto" rows="2" class="inbox-input" placeholder="Siendo las HH:MM del DD/MM/AAAA se cierra la sesión."></textarea>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label>Presidente(a)</label>
+                            <select id="acta-presidente"><option>Cargando...</option></select>
+                        </div>
+                        <div class="form-group">
+                            <label>Secretario(a)</label>
+                            <select id="acta-secretario"><option>Cargando...</option></select>
+                        </div>
+                    </div>
+                </div>
+
+            </form>
+        </div>
+
+        <!-- Footer Fijo -->
+        <footer style="padding: 20px 30px; background: #0b0f13; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 15px;">
+            <button id="btn-cancelar-acta" class="secondary-btn" style="width: auto; padding: 0 30px;">Cancelar</button>
+            <button id="btn-guardar-acta" class="form-submit" style="width: auto; padding: 0 30px; margin:0; background: var(--turquesa);">Guardar Acta</button>
+        </footer>
+
+    </div>
+</div>
+<!-- ========================================== -->
+<!-- MODAL VISOR DE ACTA (SOLO LECTURA)         -->
+<!-- ========================================== -->
+<div id="modal-visor-acta" class="modal-overlay hidden-view">
+
+<div class="modal-content" style="max-width: 850px; height: 95vh; padding: 0; background: #0b0f13; display: flex; flex-direction: column;">
+    
+    <!-- BARRA SUPERIOR DE HERRAMIENTAS -->
+    <div style="padding: 15px 25px; border-bottom: 1px solid #1E262B; background: #161d22; display: flex; justify-content: space-between; align-items: center;">
+        <h3 style="margin:0; font-size: 0.9rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px;">
+            <i class="ri-file-shield-line" style="color: var(--cyber-blue);"></i> Documento Oficial
+        </h3>
+        <div style="display: flex; gap: 10px;">
+            <button class="secondary-btn" style="padding: 5px 15px; font-size: 0.8rem; border-radius: 8px;">
+                <i class="ri-printer-line"></i> Imprimir
+            </button>
+            <button id="btn-cerrar-visor" style="background:none; border:none; color:white; font-size:1.5rem; cursor:pointer;">&times;</button>
+        </div>
+    </div>
+
+    <!-- CUERPO DEL DOCUMENTO (SCROLL) -->
+    <div style="flex: 1; overflow-y: auto; padding: 40px; background-color: #080a0c; display: flex; justify-content: center;">
+        
+        <!-- LA HOJA DIGITAL -->
+        <div class="acta-sheet">
+            
+            <!-- 1. ENCABEZADO -->
+            <header class="sheet-header">
+                <div class="sheet-brand">
+                    <h1 class="sheet-title">ACTA DE REUNIÓN</h1>
+                    <p class="sheet-subtitle" id="visor-tipo">ASAMBLEA ORDINARIA</p>
+                </div>
+                <div class="sheet-meta">
+                    <div class="meta-box">
+                        <span class="meta-label">FOLIO / ACTA</span>
+                        <span class="meta-value" id="visor-numero" style="color: var(--cyber-blue);">---</span>
+                    </div>
+                    <div class="meta-box">
+                        <span class="meta-label">ESTADO</span>
+                        <span class="meta-value" id="visor-estado-badge">---</span>
+                    </div>
+                </div>
+            </header>
+
+            <!-- 2. BARRA DE DATOS TÉCNICOS -->
+            <div class="sheet-info-grid">
+                <div>
+                    <span class="info-label">FECHA Y HORA</span>
+                    <p id="visor-fecha-hora">---</p>
+                </div>
+                <div>
+                    <span class="info-label">LUGAR</span>
+                    <p id="visor-lugar">---</p>
+                </div>
+                <div style="grid-column: span 2;">
+                    <span class="info-label">CÓDIGO DE VERIFICACIÓN (UUID)</span>
+                    <p id="visor-uuid" style="font-family: monospace; color: var(--text-muted);">---</p>
+                </div>
+            </div>
+
+            <hr class="sheet-divider">
+
+            <!-- 3. CUERPO DEL ACTA -->
+            <div class="sheet-body">
+                
+                <!-- SECCIÓN QUORUM -->
+                <div class="sheet-section">
+                    <h4 class="section-heading"><i class="ri-group-line"></i> 1. Verificación del Quórum</h4>
+                    <div class="quorum-box">
+                        <div class="quorum-stat">
+                            <span>Hábiles</span>
+                            <strong id="visor-habiles">0</strong>
+                        </div>
+                        <div class="quorum-stat">
+                            <span>Asistentes</span>
+                            <strong id="visor-asistentes">0</strong>
+                        </div>
+                        <div class="quorum-result" id="visor-quorum-res">
+                            ---
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECCIÓN ORDEN DEL DÍA -->
+                <div class="sheet-section">
+                    <h4 class="section-heading"><i class="ri-list-check"></i> 2. Orden del Día</h4>
+                    <ul id="visor-orden" class="sheet-list">
+                        <!-- JS -->
+                    </ul>
+                </div>
+
+                <!-- SECCIÓN DESARROLLO -->
+                <div class="sheet-section">
+                    <h4 class="section-heading"><i class="ri-article-line"></i> 3. Desarrollo de la Sesión</h4>
+                    <p id="visor-desarrollo" class="text-justified">...</p>
+                </div>
+
+                <!-- SECCIÓN ACUERDOS (VISUALMENTE DESTACADOS) -->
+                <div class="sheet-section">
+                    <h4 class="section-heading"><i class="ri-shake-hands-line"></i> 4. Decisiones y Acuerdos</h4>
+                    <div id="visor-acuerdos-container" class="acuerdos-grid">
+                        <!-- JS -->
+                    </div>
+                </div>
+
+                <!-- CIERRE -->
+                <div class="sheet-footer-text">
+                    <p id="visor-cierre">...</p>
+                </div>
+
+                <!-- FIRMAS -->
+                <div class="firmas-grid">
+                    <div class="firma-box">
+                        <div class="firma-line"></div>
+                        <strong id="visor-firma-presi">NOMBRE PRESIDENTE</strong>
+                        <span>Presidente(a)</span>
+                    </div>
+                    <div class="firma-box">
+                        <div class="firma-line"></div>
+                        <strong id="visor-firma-secre">NOMBRE SECRETARIO</strong>
+                        <span>Secretario(a)</span>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</div>
+</div>
     <!-- LÓGICA DE JAVASCRIPT -->
     <script type="module" src="js/firebase.js"></script>
     <script type="module" src="js/auth.js"></script>
