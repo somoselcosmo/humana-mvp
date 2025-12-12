@@ -1045,3 +1045,150 @@ td {
     .firmas-grid { flex-direction: column; gap: 40px; }
     .firma-box { width: 100%; }
 }
+/* --- ESTILOS MODAL PRO (UNIVERSAL) --- */
+
+/* Ajuste del contenedor principal */
+.pro-modal {
+    max-width: 700px; /* Más ancho para que quepan 2 columnas */
+    width: 95%;
+    max-height: 90vh; /* Nunca más alto que el 90% de la pantalla */
+    padding: 0; /* Quitamos padding global para manejarlo por secciones */
+    display: flex;
+    flex-direction: column;
+    overflow: hidden; /* Cortamos lo que sobre */
+}
+
+/* Header estilizado */
+.modal-header {
+    background: #161d22;
+    padding: 20px 30px;
+    border-bottom: 1px solid var(--border-color);
+    margin: 0; /* Reset */
+}
+
+.close-btn {
+    background: none; border: none; color: #aaa; 
+    font-size: 1.8rem; cursor: pointer; transition: 0.2s;
+}
+.close-btn:hover { color: white; }
+
+/* CUERPO CON SCROLL */
+.modal-body-scroll {
+    flex: 1; /* Ocupa el espacio disponible */
+    overflow-y: auto; /* SCROLL AQUÍ SI */
+    padding: 30px;
+    background-color: #0b0f13;
+}
+
+/* LA GRILLA DE 2 COLUMNAS */
+.form-grid-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr; /* Dos columnas iguales */
+    gap: 20px;
+}
+
+/* Hacemos que ciertos campos ocupen el ancho completo si es necesario */
+.full-width {
+    grid-column: span 2;
+}
+
+/* Footer estilizado */
+.modal-footer {
+    padding: 20px 30px;
+    background: #161d22;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    justify-content: flex-end;
+    gap: 15px;
+}
+
+/* Etiquetas de los inputs más bonitas */
+.input-label {
+    display: block;
+    margin-bottom: 8px;
+    color: var(--text-muted);
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+/* Scrollbar personalizado para que no se vea feo */
+.modal-body-scroll::-webkit-scrollbar { width: 8px; }
+.modal-body-scroll::-webkit-scrollbar-track { background: #0d1317; }
+.modal-body-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 4px; }
+
+/* Responsive para móvil (Vuelve a 1 columna) */
+@media (max-width: 600px) {
+    .form-grid-layout { grid-template-columns: 1fr; }
+    .full-width { grid-column: span 1; }
+}
+/* =========================================
+   ESTILOS LIBRO CONTABLE
+   ========================================= */
+
+/* Colores de Dinero */
+.text-income { color: #3b82f6; font-weight: 700; } /* Azul/Verde */
+.text-expense { color: #f97316; font-weight: 700; } /* Naranja */
+
+/* Badges de Tipo de Movimiento */
+.badge-ingreso {
+    background: rgba(6, 182, 212, 0.15); /* Cyan suave */
+    color: #06b6d4;
+    border: 1px solid rgba(6, 182, 212, 0.3);
+    padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;
+}
+
+.badge-egreso {
+    background: rgba(244, 63, 94, 0.15); /* Rojo suave */
+    color: #f43f5e;
+    border: 1px solid rgba(244, 63, 94, 0.3);
+    padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; text-transform: uppercase; font-weight: 700;
+}
+
+/* Badges de Estado (Aprobación) */
+.status-approved { color: #10b981; background: rgba(16, 185, 129, 0.1); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(16, 185, 129, 0.2); }
+.status-review { color: #f59e0b; background: rgba(245, 158, 11, 0.1); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; border: 1px solid rgba(245, 158, 11, 0.2); }
+
+/* Botones de Acción en Tabla */
+.action-icon-btn {
+    background: rgba(255,255,255,0.05);
+    border: 1px solid var(--border-color);
+    width: 32px; height: 32px;
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: #aaa; transition: 0.2s; cursor: pointer; margin-right: 5px;
+}
+.action-icon-btn:hover { background: rgba(255,255,255,0.1); color: white; border-color: #666; }
+/* ESTILOS LIBRO INVENTARIO */
+
+/* Textos de Estadísticas */
+.text-val-green { color: #10b981; font-weight: 800; } /* Valor Total */
+.text-val-blue { color: #3b82f6; font-weight: 800; }  /* Asignados */
+.text-val-red { color: #f43f5e; font-weight: 800; }   /* De Baja */
+
+/* Badges de Estado Inventario */
+.badge-operativo {
+    background: rgba(16, 185, 129, 0.15); color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+.badge-baja {
+    background: rgba(239, 68, 68, 0.15); color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+.badge-mantenimiento {
+    background: rgba(99, 102, 241, 0.15); color: #818cf8;
+    border: 1px solid rgba(99, 102, 241, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+.badge-regular {
+    background: rgba(245, 158, 11, 0.15); color: #f59e0b;
+    border: 1px solid rgba(245, 158, 11, 0.3); padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
+}
+
+/* Botones Toolbar (Visuales) */
+.toolbar-btn {
+    background: transparent; border: 1px solid var(--border-color); color: #aaa;
+    padding: 8px 15px; border-radius: 8px; font-size: 0.8rem; cursor: pointer; transition: 0.2s;
+    display: flex; align-items: center; gap: 8px;
+}
+.toolbar-btn:hover { background: rgba(255,255,255,0.05); color: white; }
