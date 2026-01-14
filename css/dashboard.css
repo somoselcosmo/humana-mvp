@@ -759,6 +759,7 @@ td {
     grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
     gap: 25px;
     margin-bottom: 40px;
+    align-items: start;
 }
 
 /* La Tarjeta Base */
@@ -1192,3 +1193,108 @@ td {
     display: flex; align-items: center; gap: 8px;
 }
 .toolbar-btn:hover { background: rgba(255,255,255,0.05); color: white; }
+/* ESTILOS LISTA DIGNATARIOS (DENTRO DE LA TARJETA) */
+
+.gov-president-section {
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.gov-mini-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.gov-mini-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(255,255,255,0.03);
+    padding: 8px 12px;
+    border-radius: 10px;
+    border: 1px solid transparent;
+    transition: 0.2s;
+}
+
+.gov-mini-item:hover {
+    background: rgba(255,255,255,0.06);
+    border-color: rgba(255,255,255,0.1);
+}
+
+.gov-mini-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    background: #1f2930;
+    color: var(--cyber-blue);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 0.8rem;
+    flex-shrink: 0;
+}
+
+.gov-mini-info h4 {
+    margin: 0; color: white; font-size: 0.9rem;
+}
+.gov-mini-info span {
+    display: block; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px;
+}
+/* ESTILOS DE SOLICITUDES PENDIENTES */
+.requests-container {
+    background: rgba(245, 158, 11, 0.05); /* Fondo naranja muy suave */
+    border: 1px solid rgba(245, 158, 11, 0.3);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 30px;
+}
+
+.requests-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.requests-header h3 {
+    margin: 0;
+    color: #f59e0b; /* Naranja GovTech */
+    font-size: 1rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.request-card {
+    background: #0d1317;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 15px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.req-info b { display: block; color: white; font-size: 0.95rem; }
+.req-info span { color: #888; font-size: 0.8rem; }
+
+.btn-approve {
+    background: #10b981;
+    color: white;
+    border: none;
+    padding: 8px 15px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 700;
+    font-size: 0.8rem;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: 0.2s;
+}
+.btn-approve:hover { background: #059669; }
